@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/pwiecz/go-fltk"
@@ -14,7 +16,7 @@ import (
 type App struct {
 	win        *fltk.Window
 	MenuBar    *fltk.MenuBar
-	ButtonMenu *fltk.Group
+	ButtonMenu *fltk.Flex
 	Scroll     *fltk.Scroll
 
 	workDir string
@@ -30,11 +32,59 @@ func NewApp(window *fltk.Window) *App {
 		win:     window,
 		workDir: wd,
 	}
+	app.initMainWindow()
 	return app
 }
 
 func (a *App) Exit() {
 	a.win.Hide()
+}
+
+func (a App) Hello() {
+	slog.Info("hello")
+}
+
+func (a *App) initMainWindow() {
+	a.win.Begin()
+	// Button group
+	a.ButtonMenu = fltk.NewFlex(0, 0, a.win.W(), 80)
+	a.ButtonMenu.SetType(fltk.ROW)
+	a.ButtonMenu.Begin()
+	openFileBtn := fltk.NewButton(10, 0, 80, 70, "Open File")
+	openFileBtn.SetTooltip("Open File")
+	openFileBtn.SetAlign(fltk.ALIGN_IMAGE_OVER_TEXT)
+	imgFile, err := fltk.NewPngImageLoad("img/document-open.png")
+	if err != nil {
+		slog.Error("button open image", "image:", err)
+	}
+	openFileBtn.SetImage(imgFile)
+	openFileBtn.SetCallback(func() {
+		fmt.Println("OpenFile")
+	})
+	openFileBtn.SetLabelSize(12)
+	a.ButtonMenu.Fixed(openFileBtn, 80) // Fix width to 170 px
+
+	openFolderBtn := fltk.NewButton(0, 0, 80, 70, "Open Folder")
+	openFolderBtn.SetCallback(func() {
+		fmt.Println("OpenFolderBtn")
+	})
+	openFolderBtn.SetAlign(fltk.ALIGN_IMAGE_OVER_TEXT)
+	imgFolder, err := fltk.NewPngImageLoad("img/folder-open.png")
+	if err != nil {
+		slog.Error("button open folder", "image:", err)
+	}
+	openFolderBtn.SetImage(imgFolder)
+	openFolderBtn.SetCallback(func() {
+		fmt.Println("OpenFolder")
+	})
+	openFolderBtn.SetLabelSize(12)
+	a.ButtonMenu.Fixed(openFolderBtn, 80)
+
+	bx := fltk.NewBox(fltk.BORDER_BOX, 0, 0, 1, 1, "box")
+	a.ButtonMenu.Add(bx)
+	a.ButtonMenu.End()
+
+	a.win.End()
 }
 
 /*
