@@ -10,16 +10,27 @@ import (
 	"github.com/pwiecz/go-fltk"
 )
 
+// App kapselt die Hauptlogik und UI-Elemente der Anwendung.
+// Sie verwaltet das Hauptfenster, Menüleisten, Schaltflächen, Fortschrittsanzeige
+// sowie die aktuelle Arbeitsumgebung.
 //
-
+// Felder:
+//   win        – Das Hauptfenster der Anwendung.
+//   MenuBar    – Die Menüleiste am oberen Rand des Fensters.
+//   ButtonMenu – Ein Flex-Container für die Hauptaktionsschaltflächen (z.B. Öffnen, Ausführen).
+//   Scroll     – (Nicht verwendet) Scroll-Widget, ggf. für Listenanzeige vorgesehen.
+//   progress   – Fortschrittsbalken zur Anzeige des aktuellen Status (0–100%).
+//   lister     – Benutzerdefiniertes Scroll-Widget zur Anzeige und Verwaltung von Dateieinträgen.
+//   workDir    – Aktuelles Arbeitsverzeichnis für Dateioperationen.
+//
 type App struct {
-	win        *fltk.Window
-	MenuBar    *fltk.MenuBar
-	ButtonMenu *fltk.Flex
-	Scroll     *fltk.Scroll
-	progress   *fltk.Progress
-	lister     *Scroll
-	workDir    string
+	win        *fltk.Window      // Hauptfenster
+	MenuBar    *fltk.MenuBar     // Menüleiste
+	ButtonMenu *fltk.Flex        // Container für Aktionsschaltflächen
+	Scroll     *fltk.Scroll      // (Optional) Scroll-Widget
+	progress   *fltk.Progress    // Fortschrittsanzeige
+	lister     *Scroll           // Benutzerdefinierte Liste für Dateien
+	workDir    string            // Arbeitsverzeichnis
 }
 
 func NewApp(window *fltk.Window) *App {
