@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 
+	"github.com/archeopternix/gofltk-videoconverter/util"
 	"github.com/pwiecz/go-fltk"
 )
 
-/*	"log/slog"
-
-	"path/filepath"
-*/
+//
 
 type App struct {
 	win        *fltk.Window
@@ -19,8 +18,8 @@ type App struct {
 	ButtonMenu *fltk.Flex
 	Scroll     *fltk.Scroll
 	progress   *fltk.Progress
-
-	workDir string
+	lister     *Scroll
+	workDir    string
 }
 
 func NewApp(window *fltk.Window) *App {
@@ -42,11 +41,12 @@ func (a *App) Exit() {
 }
 
 func (a App) Hello() {
-	slog.Info("hello")
+	slog.Info("start")
 }
 
-func (a *App) SetProgress(num float64, text string) {
-	a.progress.SetValue(num)
+// SetProgress sets the value 0..100% and a text message
+func (a *App) SetProgress(num int, text string) {
+	a.progress.SetValue(float64(num))
 	a.progress.SetLabel(text)
 }
 
@@ -72,6 +72,7 @@ func (a *App) initMainWindow() {
 	openFileBtn.SetImage(imgFile)
 	openFileBtn.SetCallback(func() {
 		fmt.Println("OpenFile")
+		a.openFile()
 	})
 	openFileBtn.SetLabelSize(labelSize)
 	a.ButtonMenu.Fixed(openFileBtn, 80) // Fix width to 170 px
@@ -141,7 +142,9 @@ func (a *App) initMainWindow() {
 	a.ButtonMenu.Add(bx)
 	a.ButtonMenu.End()
 
-	mainContent := fltk.NewGroup(0, 80, a.win.W(), a.win.H()-80-25)
+	mainContent := fltk.NewFlex(0, 85, a.win.W(), a.win.H()-80-25)
+	mainContent.Begin()
+	a.lister = NewScroll(0, 0, mainContent.W(), mainContent.H())
 	// ... add widgets to mainContent ...
 	mainContent.End()
 
@@ -241,6 +244,7 @@ func MainWin(window *fltk.Window) {
 	win.End()
 }
 
+
 // openDirectory prompts the user to select a directory, processes its video files,
 // and adds them to the scrollable list.
 func openDirectory() {
@@ -290,12 +294,14 @@ func openDirectory() {
 	}
 }
 
+*/
+
 // openFile prompts the user to select one or more video files, processes them,
 // and adds them to the scrollable list.
-func openFile() {
+func (a *App) openFile() {
 	// Create a new file chooser dialog for video files
 	chooser := fltk.NewFileChooser(
-		workingDir,                         // Default directory
+		a.workDir,                          // Default directory
 		"*.{mp4,mpeg,avi,vob,mpg,mov,m2t}", // Video file filter
 		fltk.FileChooser_MULTI,             // Mode: Select multiple files
 		"Select File",                      // Dialog title
@@ -313,30 +319,29 @@ func openFile() {
 		return
 	}
 
-	// Set up a new workflow to filter selected files
-	wf := filter.NewWorkflow()
-	wf.Add(filter.NewVideoFileFilter())
+	var videofiles []string
 
-	list, err := wf.Process(chooser.Selection()) // Process selected files
-	if err != nil {
-		slog.Error("open files", "message", err)
-		return
+	for _, file := range chooser.Selection() {
+		if util.IsVideo(file) {
+			videofiles = append(videofiles, filepath.ToSlash(file))
+		}
 	}
 
 	// If no valid video files found, log and return
-	if len(list) == 0 {
+	if len(videofiles) == 0 {
 		slog.Info("open files", "no video files selected")
 		return
 	}
 
 	// Update working directory to the location of the first file
-	workingDir, _ = filepath.Split(list[0])
+	a.workDir, _ = filepath.Split(videofiles[0])
 	// Add each processed video file to the scrollable list
-	for _, item := range list {
-		lister.AddRow(util.GetInfoFromFileName(item))
+	for _, item := range videofiles {
+		a.lister.AddRow(util.GetInfoFromFileName(item))
 	}
 }
 
+/*
 // generateFiles collects all file paths from the scroll list
 // and initializes a new workflow for further processing (e.g., batch processing).
 func generateFiles() {
