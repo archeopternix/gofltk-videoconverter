@@ -10,7 +10,7 @@ import (
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
-	window := fltk.NewWindow(500, 440)
+	window := fltk.NewWindow(500, 440, "Video Enhancer and Converter")
 	window.Resizable(window)
 	app := ui.NewApp(window)
 	app.Hello()

@@ -18,6 +18,7 @@ type App struct {
 	MenuBar    *fltk.MenuBar
 	ButtonMenu *fltk.Flex
 	Scroll     *fltk.Scroll
+	progress   *fltk.Progress
 
 	workDir string
 }
@@ -44,12 +45,23 @@ func (a App) Hello() {
 	slog.Info("hello")
 }
 
+func (a *App) SetProgress(num float64, text string) {
+	a.progress.SetValue(num)
+	a.progress.SetLabel(text)
+}
+
+const (
+	labelSize = 11
+)
+
 func (a *App) initMainWindow() {
 	a.win.Begin()
 	// Button group
-	a.ButtonMenu = fltk.NewFlex(0, 0, a.win.W(), 80)
+	a.ButtonMenu = fltk.NewFlex(0, 5, a.win.W(), 80)
 	a.ButtonMenu.SetType(fltk.ROW)
+	a.ButtonMenu.SetGap(1)
 	a.ButtonMenu.Begin()
+
 	openFileBtn := fltk.NewButton(10, 0, 80, 70, "Open File")
 	openFileBtn.SetTooltip("Open File")
 	openFileBtn.SetAlign(fltk.ALIGN_IMAGE_OVER_TEXT)
@@ -61,7 +73,7 @@ func (a *App) initMainWindow() {
 	openFileBtn.SetCallback(func() {
 		fmt.Println("OpenFile")
 	})
-	openFileBtn.SetLabelSize(12)
+	openFileBtn.SetLabelSize(labelSize)
 	a.ButtonMenu.Fixed(openFileBtn, 80) // Fix width to 170 px
 
 	openFolderBtn := fltk.NewButton(0, 0, 80, 70, "Open Folder")
@@ -77,12 +89,71 @@ func (a *App) initMainWindow() {
 	openFolderBtn.SetCallback(func() {
 		fmt.Println("OpenFolder")
 	})
-	openFolderBtn.SetLabelSize(12)
+	openFolderBtn.SetLabelSize(labelSize)
 	a.ButtonMenu.Fixed(openFolderBtn, 80)
 
-	bx := fltk.NewBox(fltk.BORDER_BOX, 0, 0, 1, 1, "box")
+	sep1 := fltk.NewBox(fltk.NO_BOX, 0, 0, 20, 70, "")
+	a.ButtonMenu.Fixed(sep1, 20)
+
+	RunBtn := fltk.NewButton(0, 0, 80, 70, "Run")
+	RunBtn.SetAlign(fltk.ALIGN_IMAGE_OVER_TEXT)
+	imgRun, err := fltk.NewPngImageLoad("img/video-x-generic.png")
+	if err != nil {
+		slog.Error("button open folder", "image:", err)
+	}
+	RunBtn.SetLabelSize(labelSize)
+	RunBtn.SetImage(imgRun)
+	RunBtn.SetCallback(func() {
+		fmt.Println("Run")
+	})
+	a.ButtonMenu.Fixed(RunBtn, 80) // Fix width to 170 px
+
+	sep2 := fltk.NewBox(fltk.NO_BOX, 0, 0, 20, 70, "")
+	a.ButtonMenu.Fixed(sep2, 20)
+
+	SettingsBtn := fltk.NewButton(0, 0, 80, 70, "Settings")
+	SettingsBtn.SetAlign(fltk.ALIGN_IMAGE_OVER_TEXT)
+	imgSettings, err := fltk.NewPngImageLoad("img/applications-system.png")
+	if err != nil {
+		slog.Error("button open folder", "image:", err)
+	}
+	SettingsBtn.SetLabelSize(labelSize)
+	SettingsBtn.SetImage(imgSettings)
+	SettingsBtn.SetCallback(func() {
+		fmt.Println("Settings")
+	})
+	a.ButtonMenu.Fixed(SettingsBtn, 80) // Fix width to 170 px
+
+	ConfigBtn := fltk.NewButton(0, 0, 80, 70, "Configuration")
+	ConfigBtn.SetAlign(fltk.ALIGN_IMAGE_OVER_TEXT)
+	imgConfig, err := fltk.NewPngImageLoad("img/preferences-desktop-theme.png")
+	if err != nil {
+		slog.Error("button open folder", "image:", err)
+	}
+	ConfigBtn.SetLabelSize(labelSize)
+	ConfigBtn.SetImage(imgConfig)
+	ConfigBtn.SetCallback(func() {
+		fmt.Println("Config")
+	})
+	a.ButtonMenu.Fixed(ConfigBtn, 80) // Fix width to 170 px
+
+	bx := fltk.NewBox(fltk.NO_BOX, 0, 0, 1, 1, "")
 	a.ButtonMenu.Add(bx)
 	a.ButtonMenu.End()
+
+	mainContent := fltk.NewGroup(0, 80, a.win.W(), a.win.H()-80-25)
+	// ... add widgets to mainContent ...
+	mainContent.End()
+
+	a.win.Resizable(mainContent)
+
+	a.progress = fltk.NewProgress(0, a.win.H()-25, a.win.W(), 25, "Status")
+	// Set range (min, max)
+	a.progress.SetMinimum(0)
+	a.progress.SetSelectionColor(fltk.ColorFromRgb(180, 180, 180))
+	a.progress.SetMaximum(100)
+	// Set value (current progress)
+	a.progress.SetValue(50)
 
 	a.win.End()
 }
