@@ -15,22 +15,24 @@ import (
 // sowie die aktuelle Arbeitsumgebung.
 //
 // Felder:
-//   win        – Das Hauptfenster der Anwendung.
-//   MenuBar    – Die Menüleiste am oberen Rand des Fensters.
-//   ButtonMenu – Ein Flex-Container für die Hauptaktionsschaltflächen (z.B. Öffnen, Ausführen).
-//   Scroll     – (Nicht verwendet) Scroll-Widget, ggf. für Listenanzeige vorgesehen.
-//   progress   – Fortschrittsbalken zur Anzeige des aktuellen Status (0–100%).
-//   lister     – Benutzerdefiniertes Scroll-Widget zur Anzeige und Verwaltung von Dateieinträgen.
-//   workDir    – Aktuelles Arbeitsverzeichnis für Dateioperationen.
 //
+//	win        – Das Hauptfenster der Anwendung.
+//	MenuBar    – Die Menüleiste am oberen Rand des Fensters.
+//	ButtonMenu – Ein Flex-Container für die Hauptaktionsschaltflächen (z.B. Öffnen, Ausführen).
+//	Scroll     – (Nicht verwendet) Scroll-Widget, ggf. für Listenanzeige vorgesehen.
+//	progress   – Fortschrittsbalken zur Anzeige des aktuellen Status (0–100%).
+//	lister     – Benutzerdefiniertes Scroll-Widget zur Anzeige und Verwaltung von Dateieinträgen.
+//	workDir    – Aktuelles Arbeitsverzeichnis für Dateioperationen.
 type App struct {
-	win        *fltk.Window      // Hauptfenster
-	MenuBar    *fltk.MenuBar     // Menüleiste
-	ButtonMenu *fltk.Flex        // Container für Aktionsschaltflächen
-	Scroll     *fltk.Scroll      // (Optional) Scroll-Widget
-	progress   *fltk.Progress    // Fortschrittsanzeige
-	lister     *Scroll           // Benutzerdefinierte Liste für Dateien
-	workDir    string            // Arbeitsverzeichnis
+	win           *fltk.Window   // Hauptfenster
+	MenuBar       *fltk.MenuBar  // Menüleiste
+	ButtonMenu    *fltk.Flex     // Container für Aktionsschaltflächen
+	Scroll        *fltk.Scroll   // (Optional) Scroll-Widget
+	progress      *fltk.Progress // Fortschrittsanzeige
+	lister        *Scroll        // Benutzerdefinierte Liste für Dateien
+	workDir       string         // Arbeitsverzeichnis
+	sysconfig     SystemConfig
+	projectconfig ProjectConfig
 }
 
 func NewApp(window *fltk.Window) *App {
@@ -40,8 +42,10 @@ func NewApp(window *fltk.Window) *App {
 	}
 
 	app := &App{
-		win:     window,
-		workDir: wd,
+		win:           window,
+		workDir:       wd,
+		sysconfig:     NewSystemConfig(".", "."),
+		projectconfig: NewProjectConfig(),
 	}
 	app.initMainWindow()
 	return app
@@ -133,6 +137,7 @@ func (a *App) initMainWindow() {
 	SettingsBtn.SetImage(imgSettings)
 	SettingsBtn.SetCallback(func() {
 		fmt.Println("Settings")
+		a.sysconfig.Dialog()
 	})
 	a.ButtonMenu.Fixed(SettingsBtn, 80) // Fix width to 170 px
 
@@ -146,6 +151,7 @@ func (a *App) initMainWindow() {
 	ConfigBtn.SetImage(imgConfig)
 	ConfigBtn.SetCallback(func() {
 		fmt.Println("Config")
+		a.projectconfig.Dialog()
 	})
 	a.ButtonMenu.Fixed(ConfigBtn, 80) // Fix width to 170 px
 
