@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/archeopternix/go-fltk"
+	vdub "github.com/archeopternix/gofltk-videoconverter/filter/virtualdub2"
 	"github.com/archeopternix/gofltk-videoconverter/util"
 )
 
@@ -164,7 +165,7 @@ func (a *App) initMainWindow() {
 
 	mainContent := fltk.NewFlex(0, 85, a.win.W(), a.win.H()-80-25)
 	mainContent.Begin()
-	a.lister = NewScroll(0, 0, mainContent.W(), mainContent.H())
+	a.lister = NewScroll(0, 85, mainContent.W(), mainContent.H()-80-25)
 	// ... add widgets to mainContent ...
 	mainContent.End()
 
@@ -182,7 +183,12 @@ func (a *App) initMainWindow() {
 }
 
 func (a *App) ExecuteScripts() {
-	fmt.Println(a.getSelectedVideos())
+	videos := a.getSelectedVideos()
+	vdubFilter := vdub.NewVDubFilter(".mp4")
+	vdubFilter.AddFiles(videos...)
+	if err := vdubFilter.Run(); err != nil {
+		slog.Error("VirtualDub filter", "msg", err)
+	}
 }
 
 // VideoFilesFromFolder reads in all files of type video from 'dir'
