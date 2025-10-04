@@ -3,8 +3,8 @@ package main
 import (
 	"log/slog"
 
+	"github.com/archeopternix/go-fltk"
 	"github.com/archeopternix/gofltk-videoconverter/ui"
-	"github.com/pwiecz/go-fltk"
 )
 
 func main() {

@@ -6,56 +6,23 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"os/exec"
+
 	"path/filepath"
 	"strconv"
 	"strings"
 
-	. "gopkg.in/vansante/go-ffprobe.v2"
-	"gopkg.in/yaml.v2"
+	mediainfo "github.com/archeopternix/go-mediafileinfo"
 )
 
 const (
 	binPath = "ffprobe.exe"
 )
 
-// FFprobe executes 'ffprobe.exe' and returns a populated ffprobe.ProbeData structure
-func FFprobe(fileURL string, extraFFProbeOptions ...string) (*ProbeData, error) {
-	args := append([]string{
-		"-loglevel", "fatal",
-		"-print_format", "json",
-		"-show_format",
-		"-show_streams",
-		"-show_chapters",
-	}, extraFFProbeOptions...)
-
-	// Add the file argument
-	args = append(args, fileURL)
-
-	data := exec.Command(binPath, args...)
-
-	// Running the command and capturing the combined output (stdout and stderr)
-	jsonData, err := data.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("Conversion: %v Error %s", err, string(jsonData))
-	}
-
-	probe := &ProbeData{}
-
-	// Unmarshal the struct into JSON
-	err = json.Unmarshal(jsonData, probe)
-	if err != nil {
-		return nil, fmt.Errorf("Error marshaling JSON: %v\n", err)
-	}
-
-	return probe, nil
-}
-
 // IsVideo returns true is file is a video and optional checks container format
 func IsVideo(fileURL string, container ...string) bool {
-	probeData, err := FFprobe(fileURL)
+	avFormatCtx, err := mediainfo.GetMediaInfo(fileURL)
 	if err != nil {
-		slog.Debug("error in reading the ffprobe data", "file", fileURL, "msg", err)
+		slog.Debug("error in reading the AvFormatContext data", "file", fileURL, "msg", err)
 		return false
 	}
 
@@ -66,19 +33,12 @@ func IsVideo(fileURL string, container ...string) bool {
 		return false
 	}
 
-	// checks if there is a first video stream
-	if probeData.FirstVideoStream() != nil {
-		// when container has a defined list of video formats and matches Format.Formatname
-		if len(container) > 0 {
-			if containsAny(probeData.Format.FormatName, container) {
-				return true
-			}
-			slog.Debug("container format does not match", "file", fileURL, "video", probeData.Format.FormatName, "expected", container)
-			return false
+	for _, av := range avFormatCtx.Streams {
+		if av.CodecParameters.CodecType == mediainfo.AVMEDIA_TYPE_VIDEO {
+			return true
 		}
-
-		return true
 	}
+
 	slog.Debug("not a video file", "file", fileURL)
 	return false
 }
@@ -92,68 +52,6 @@ func containsAny(haystack string, needles []string) bool {
 		}
 	}
 	return false
-}
-
-// ProbeDataJson prints ffprobe.ProbeData as JSON
-func ProbeDataJson(pd *ProbeData) []byte {
-	// Marshal the struct into JSON
-	jsonData, err := json.Marshal(pd.Format)
-	if err != nil {
-		fmt.Printf("Error marshaling JSON: %v\n", err)
-		return nil
-	}
-	str := jsonData
-
-	for _, s := range pd.Streams {
-		jsonData, err := json.Marshal(s)
-		if err != nil {
-			fmt.Printf("Error marshaling JSON: %v\n", err)
-			return nil
-		}
-		str = append(str, jsonData...)
-	}
-	for _, c := range pd.Chapters {
-		jsonData, err := json.Marshal(c)
-		if err != nil {
-			fmt.Printf("Error marshaling JSON: %v\n", err)
-			return nil
-		}
-		str = append(str, jsonData...)
-	}
-	return str
-}
-
-// ProbeDataJson prints ffprobe.ProbeData as YAML
-func ProbeDataYAML(pd *ProbeData) []byte {
-	// Marshal the struct into JSON
-	yamlData, err := yaml.Marshal(pd.Format)
-	if err != nil {
-		fmt.Printf("Error marshaling Format YAML: %v\n", err)
-		return nil
-	}
-	str := []byte("format:\n")
-	str = append(str, yamlData...)
-
-	str = append(str, []byte("streams:\n")...)
-	for _, s := range pd.Streams {
-		yamlData, err := yaml.Marshal(s)
-		if err != nil {
-			fmt.Printf("Error marshaling Streams YAML: %v\n", err)
-			return nil
-		}
-
-		str = append(str, yamlData...)
-	}
-	str = append(str, []byte("chapters:\n")...)
-	for _, c := range pd.Chapters {
-		yamlData, err := yaml.Marshal(c)
-		if err != nil {
-			fmt.Printf("Error marshaling Chapters YAML: %v\n", err)
-			return nil
-		}
-		str = append(str, yamlData...)
-	}
-	return str
 }
 
 type Info struct {
@@ -210,30 +108,43 @@ func FormatNumberWithUnit(numberStr string) (string, error) {
 	return fmt.Sprintf("%s %s", formattedValue, unit), nil
 }
 
-func GetInfoFromFileName(fileURL string) *Info {
-	probeData, err := FFprobe(fileURL)
+func GetFirstVideoStream(avFormatCtx *mediainfo.AVFormatContext) (*mediainfo.AVStream, error) {
+	for _, av := range avFormatCtx.Streams {
+		if av.CodecParameters.CodecType == mediainfo.AVMEDIA_TYPE_VIDEO {
+			return &av, nil
+		}
+	}
+	slog.Debug("no video detected", "file", avFormatCtx.Filename)
+	return nil, fmt.Errorf("no video in file: %s", avFormatCtx.Filename)
+}
+
+func GetInfoFromFileName(fileURL string) (*Info, error) {
+
+	avFormatCtx, err := mediainfo.GetMediaInfo(fileURL)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("error in reading the AvFormatContext data '%s': %v", fileURL, err)
 	}
 
 	path, _ := filepath.Abs(fileURL)
 
 	info := &Info{FullPath: path, Name: filepath.Base(fileURL)}
 
-	// checks if there is a first video stream
-	if probeData.FirstVideoStream() != nil {
-		info.FileType = probeData.Format.FormatName
-		info.FileSize = probeData.Format.Size
-		info.FileSize, _ = FormatNumberWithUnit(info.FileSize)
-		info.VideoType = probeData.FirstVideoStream().CodecName
-		info.ResolutionX = probeData.FirstVideoStream().Width
-		info.ResolutionY = probeData.FirstVideoStream().Height
-		info.FPS, _ = CalculateDivision(probeData.FirstVideoStream().AvgFrameRate, probeData.FirstVideoStream().FieldOrder)
-		info.Duration, _ = ConvertSecondsToHMS(probeData.FirstVideoStream().Duration)
-		info.FieldOrder = probeData.FirstVideoStream().FieldOrder
+	vstream, serr := GetFirstVideoStream(avFormatCtx)
+	if serr != nil {
+		return nil, fmt.Errorf("error reading video file '%s': %v", fileURL, serr)
+
 	}
 
-	return info
+	info.FileType = vstream.CodecParameters.CodecIDText
+	info.FileSize = avFormatCtx.FileSizeText
+	info.VideoType = avFormatCtx.FormatLongName
+	info.ResolutionX = vstream.CodecParameters.Width
+	info.ResolutionY = vstream.CodecParameters.Height
+	info.FPS = "n.a."
+	info.Duration = vstream.DurationText
+	info.FieldOrder = vstream.CodecParameters.FieldOrderText
+
+	return info, nil
 
 }
 

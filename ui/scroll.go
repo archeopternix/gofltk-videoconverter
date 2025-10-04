@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"sort"
 
+	"github.com/archeopternix/go-fltk"
 	"github.com/archeopternix/gofltk-videoconverter/util"
-	"github.com/pwiecz/go-fltk"
 )
 
 //	"github.com/archeopternix/fltk/util"
@@ -228,7 +228,7 @@ func (s Scroll) GetSelectedFilePaths() []string {
 
 	rows := s.rows
 	for i := 0; i < len(rows); i++ {
-		if rows[i].checkbox.IsActive() {
+		if rows[i].checkbox.Value() {
 			info := rows[i].info
 			files = append(files, info.FullPath) // Assumes info has a FilePath field
 		}

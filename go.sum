@@ -1,5 +1,7 @@
-github.com/pwiecz/go-fltk v0.0.0-20250418100050-a16aed0def84 h1:UhtFou9xFWEJXQwZzah2DIXHC50OGY85a3Q8Zt8Hdo8=
-github.com/pwiecz/go-fltk v0.0.0-20250418100050-a16aed0def84/go.mod h1:uMK5daOr9p+ba2BPs5QadbfaqqrHR5TGj13yWGsAsmw=
+github.com/archeopternix/go-fltk v0.0.0-20250906094057-27cfdf3359c1 h1:eFVLM2I/A5HyWKC4Tv4K7/2W1ED5mHpbPWpQjbGYU4w=
+github.com/archeopternix/go-fltk v0.0.0-20250906094057-27cfdf3359c1/go.mod h1:Sa14pJkNwgwm/ulRPFBkr0Tn5LKPAsSULunegm3nIiU=
+github.com/archeopternix/go-mediafileinfo v0.2.3 h1:5e8YeHijavq5b7lr0wM7BV1mw4MxqvNqr5ThAhZ1aiA=
+github.com/archeopternix/go-mediafileinfo v0.2.3/go.mod h1:oQKE9GeEjWckRyZV2KbnzSXV37948BaaquHzbD3ZQqM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/vansante/go-ffprobe.v2 v2.2.1 h1:sFV08OT1eZ1yroLCZVClIVd9YySgCh9eGjBWO0oRayI=

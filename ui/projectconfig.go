@@ -3,7 +3,7 @@ package ui
 import (
 	"log/slog"
 
-	"github.com/pwiecz/go-fltk"
+	"github.com/archeopternix/go-fltk"
 )
 
 type ProjectConfig struct {
