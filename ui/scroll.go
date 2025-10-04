@@ -202,7 +202,7 @@ func (s *Scroll) startResizeWatcher() {
 
 // Refresh rearranges the rows in the scroll container and adjusts dimensions.
 func (s *Scroll) Refresh() {
-	y := 10 + 25 // Starting Y-coordinate for the first row
+	y := 90 //10 + 25 // Starting Y-coordinate for the first row
 
 	// Estimate the total height of the content
 	contentHeight := len(s.rows)*50 + 10
