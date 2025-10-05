@@ -11,6 +11,8 @@ import (
 	"github.com/archeopternix/gofltk-videoconverter/util"
 )
 
+const targetExt = "_deshaked.mp4"
+
 // App kapselt die Hauptlogik und UI-Elemente der Anwendung.
 // Sie verwaltet das Hauptfenster, Menüleisten, Schaltflächen, Fortschrittsanzeige
 // sowie die aktuelle Arbeitsumgebung.
@@ -184,7 +186,7 @@ func (a *App) initMainWindow() {
 
 func (a *App) ExecuteScripts() {
 	videos := a.getSelectedVideos()
-	vdubFilter := vdub.NewVDubFilter(".mp4")
+	vdubFilter := vdub.NewVDubFilter(targetExt)
 	vdubFilter.AddFiles(videos...)
 	if err := vdubFilter.Run(); err != nil {
 		slog.Error("VirtualDub filter", "msg", err)

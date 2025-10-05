@@ -5,13 +5,19 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 	"text/template"
 
 	. "github.com/archeopternix/gofltk-videoconverter/filter"
 	"github.com/archeopternix/gofltk-videoconverter/util"
 )
 
-const vDubPath = "/home/archeopternix/VirtualDub2/VirtualDub64.exe"
+// write a batch file in the folder of VirtualDub64.exe
+// Content:
+//
+//	"C:\Program Files\VirtualDub64\VirtualDub64.exe" /s"%1" /x
+const vDubWinPath = "C:\\\\Programme\\VirtualDub64\\exec.bat"
+const vDubLinuxPath = "/home/archeopternix/VirtualDub2/VirtualDub64.exe"
 
 type VDubFilter struct {
 	Filter
@@ -46,18 +52,18 @@ func (v *VDubFilter) AddFiles(files ...string) {
 
 		d1 := DataJob{
 			Index:   i*2 + 1,
-			InFile:  file,
+			InFile:  DoubleBackslash(file),
 			OutFile: "",
-			LogFile: util.ReplaceExtOfFile(out, ".log"),
+			LogFile: DoubleBackslash(util.ReplaceExtOfFile(out, ".log")),
 			Deshake: 1,
 		}
 		v.data.Jobs = append(v.data.Jobs, d1)
 
 		d2 := DataJob{
 			Index:   i*2 + 2,
-			InFile:  file,
-			OutFile: util.ReplaceExtOfFile(out, v.Ext),
-			LogFile: util.ReplaceExtOfFile(out, ".log"),
+			InFile:  DoubleBackslash(file),
+			OutFile: DoubleBackslash(util.ReplaceExtOfFile(out, v.Ext)),
+			LogFile: DoubleBackslash(util.ReplaceExtOfFile(out, ".log")),
 			Deshake: 2,
 		}
 		v.data.Jobs = append(v.data.Jobs, d2)
@@ -77,6 +83,10 @@ type DataJob struct {
 	Deshake int // 1 = Analyze; 2 = Save
 }
 
+func DoubleBackslash(in string) string {
+	return strings.Replace(in, "\\", "\\\\", -1)
+}
+
 func (v VDubFilter) Run() error {
 	if len(v.InFiles) == 0 {
 		return fmt.Errorf("no files to process")
@@ -89,7 +99,7 @@ func (v VDubFilter) Run() error {
 	}
 
 	// write to vdub.jobs file
-	out := util.ReplacePathOfFile("vdub.jobs", v.OutDir)
+	out := util.ReplacePathOfFile("vdub.vcf", v.OutDir)
 	f, err := os.Create(out)
 	if err != nil {
 		return fmt.Errorf("could not create file '%s', %w", out, err)
@@ -102,11 +112,11 @@ func (v VDubFilter) Run() error {
 	}
 
 	// Command to run VirtualDub with the batch job file
-	cmd := exec.Command("wine", vDubPath, "/s\""+out+"\"", "/x")
-	fmt.Println(cmd)
-	slog.Debug("starting VirtualDub2.exe", "jobs:", out)
+	cmd := exec.Command(vDubWinPath, out)
+
+	slog.Debug("starting VirtualDub2 process", "cmd", cmd)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("error when running VirtualDub.exe", err, output)
+		return fmt.Errorf("%v, %s", err, output)
 	}
 	slog.Debug("finished VirtualDub2.exe", "jobs:", out)
 

@@ -2,3 +2,5 @@ github.com/archeopternix/go-fltk v0.0.0-20250906094057-27cfdf3359c1 h1:eFVLM2I/A
 github.com/archeopternix/go-fltk v0.0.0-20250906094057-27cfdf3359c1/go.mod h1:Sa14pJkNwgwm/ulRPFBkr0Tn5LKPAsSULunegm3nIiU=
 github.com/archeopternix/go-mediafileinfo v0.2.3 h1:5e8YeHijavq5b7lr0wM7BV1mw4MxqvNqr5ThAhZ1aiA=
 github.com/archeopternix/go-mediafileinfo v0.2.3/go.mod h1:oQKE9GeEjWckRyZV2KbnzSXV37948BaaquHzbD3ZQqM=
+github.com/archeopternix/go-mediafileinfo v0.2.7 h1:BWjEhiIMTgZRUQGxyLwzPVs7mS06wbypwMuVgwEQOUA=
+github.com/archeopternix/go-mediafileinfo v0.2.7/go.mod h1:oQKE9GeEjWckRyZV2KbnzSXV37948BaaquHzbD3ZQqM=
