@@ -2,12 +2,16 @@ package virtualdub2
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
+	"os/exec"
 	"text/template"
 
 	. "github.com/archeopternix/gofltk-videoconverter/filter"
 	"github.com/archeopternix/gofltk-videoconverter/util"
 )
+
+const vDubPath = "/home/archeopternix/VirtualDub2/VirtualDub64.exe"
 
 type VDubFilter struct {
 	Filter
@@ -28,16 +32,15 @@ func (v *VDubFilter) AddFiles(files ...string) {
 		return
 	}
 
-	outdir := util.GetPathFromFile(files[0])
-	if v.OutDir != "" {
-		outdir = v.OutDir
+	if v.OutDir == "" {
+		v.OutDir = util.GetPathFromFile(files[0])
 	}
 
 	v.data.JobsTotal = len(files) * 2
 
 	for i, file := range files {
 		v.InFiles = append(v.InFiles, file)
-		out := util.ReplacePathOfFile(file, outdir)
+		out := util.ReplacePathOfFile(file, v.OutDir)
 		v.OutFiles = append(v.InFiles, util.ReplaceExtOfFile(out, v.Ext))
 		v.Optionals = append(v.Optionals, util.ReplaceExtOfFile(out, ".log"))
 
@@ -97,5 +100,15 @@ func (v VDubFilter) Run() error {
 	if err := tpl.ExecuteTemplate(f, "main", v.data); err != nil {
 		return fmt.Errorf("error executing template: %w", err)
 	}
+
+	// Command to run VirtualDub with the batch job file
+	cmd := exec.Command("wine", vDubPath, "/s\""+out+"\"", "/x")
+	fmt.Println(cmd)
+	slog.Debug("starting VirtualDub2.exe", "jobs:", out)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("error when running VirtualDub.exe", err, output)
+	}
+	slog.Debug("finished VirtualDub2.exe", "jobs:", out)
+
 	return nil
 }

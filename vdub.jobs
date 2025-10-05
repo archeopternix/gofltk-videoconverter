@@ -9,7 +9,7 @@
 //--------------------------------------------------
 // $job "Job 1"
 // $data ""
-// $input "/home/archeopternix/Videos/DSCN1000.MOV"
+// $input "/home/archeopternix/Videos/DSCN1002.MOV"
 // $output ""
 // $state 0
 // $id c7f8a49b034a05b4
@@ -19,7 +19,7 @@
 
 // $script
 
-VirtualDub.Open("/home/archeopternix/Videos/DSCN1000.MOV","",0);
+VirtualDub.Open("/home/archeopternix/Videos/DSCN1002.MOV","",0);
 VirtualDub.audio.SetSource(1);
 VirtualDub.audio.SetMode(1);
 VirtualDub.audio.SetInterleave(1,500,1,0,0);
@@ -44,7 +44,7 @@ VirtualDub.SaveAudioFormat("");
 VirtualDub.video.filters.BeginUpdate();
 VirtualDub.video.filters.Clear();
 VirtualDub.video.filters.Add("Deshaker v3.1");
-VirtualDub.video.filters.instance[0].Config("19|1|30|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|1|2|8|30|300|4|/home/archeopternix/Videos/DSCN1000.log|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|0|0|1|1|0|10|1000|1|88|1|1|20|5000|100|20|1|0|ff00ff");
+VirtualDub.video.filters.instance[0].Config("19|1|30|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|1|2|8|30|300|4|/home/archeopternix/Videos/DSCN1002.log|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|0|0|1|1|0|10|1000|1|88|1|1|20|5000|100|20|1|0|ff00ff");
 VirtualDub.video.filters.EndUpdate();
 VirtualDub.audio.filters.Clear();
 VirtualDub.video.SetRange();
@@ -60,8 +60,8 @@ VirtualDub.Close();
 //--------------------------------------------------
 // $job "Job 2"
 // $data ""
-// $input "/home/archeopternix/Videos/DSCN1000.MOV"
-// $output "/home/archeopternix/Videos/DSCN1000.mp4"
+// $input "/home/archeopternix/Videos/DSCN1002.MOV"
+// $output "/home/archeopternix/Videos/DSCN1002.mp4"
 // $state 0
 // $id c7f8a49b034a05b4
 // $start_time 00000000 00000000
@@ -70,7 +70,7 @@ VirtualDub.Close();
 
 // $script
 
-VirtualDub.Open("/home/archeopternix/Videos/DSCN1000.MOV","",0);
+VirtualDub.Open("/home/archeopternix/Videos/DSCN1002.MOV","",0);
 VirtualDub.audio.SetSource(1);
 VirtualDub.audio.SetMode(1);
 VirtualDub.audio.SetInterleave(1,500,1,0,0);
@@ -95,14 +95,14 @@ VirtualDub.SaveAudioFormat("");
 VirtualDub.video.filters.BeginUpdate();
 VirtualDub.video.filters.Clear();
 VirtualDub.video.filters.Add("Deshaker v3.1");
-VirtualDub.video.filters.instance[0].Config("19|2|30|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|1|2|8|30|300|4|/home/archeopternix/Videos/DSCN1000.log|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|0|0|1|1|0|10|1000|1|88|1|1|20|5000|100|20|1|0|ff00ff");
+VirtualDub.video.filters.instance[0].Config("19|2|30|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|1|2|8|30|300|4|/home/archeopternix/Videos/DSCN1002.log|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|0|0|1|1|0|10|1000|1|88|1|1|20|5000|100|20|1|0|ff00ff");
 VirtualDub.video.filters.EndUpdate();
 VirtualDub.audio.filters.Clear();
 VirtualDub.video.SetRange();
 VirtualDub.project.ClearTextInfo();
   // -- $reloadstop --
 
-VirtualDub.SaveAVI("/home/archeopternix/Videos/DSCN1000.mp4");
+VirtualDub.SaveAVI("/home/archeopternix/Videos/DSCN1002.mp4");
 VirtualDub.audio.SetSource(1);
 VirtualDub.Close();
 
