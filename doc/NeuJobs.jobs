@@ -1,0 +1,102 @@
+// VirtualDub job list (Sylia script format)
+// This is a program generated file -- edit at your own risk.
+//
+// $signature 0 1
+// $numjobs 2
+//
+
+// $job "Job 1"
+// $data ""
+// $input "Z:\home\archeopternix\Videos\2026 Skifahren\20260207_203328.mp4"
+// $output ""
+// $state 0
+// $id c7f8a49b04dc7ea9
+// $start_time 00000000 00000000
+// $end_time 00000000 00000000
+// $script
+
+VirtualDub.Open("Z:\\home\\archeopternix\\Videos\\2026 Skifahren\\20260207_203328.mp4","",0);
+VirtualDub.audio.SetSource(1);
+VirtualDub.audio.SetMode(1);
+VirtualDub.audio.SetInterleave(1,500,1,0,0);
+VirtualDub.audio.SetClipMode(1,1);
+VirtualDub.audio.SetEditMode(1);
+VirtualDub.audio.SetConversion(0,0,0,0,0);
+VirtualDub.audio.SetVolume();
+VirtualDub.audio.SetCompression();
+VirtualDub.audio.EnableFilterGraph(0);
+VirtualDub.video.SetInputFormat(0);
+VirtualDub.video.SetOutputFormat(7);
+VirtualDub.video.SetMode(3);
+VirtualDub.video.SetSmartRendering(0);
+VirtualDub.video.SetPreserveEmptyFrames(0);
+VirtualDub.video.SetFrameRate2(0,0,1);
+VirtualDub.video.SetIVTC(0, 0, 0, 0);
+VirtualDub.video.SetCompression(0x68637061,0,10000,0,"avlib-1.vdplugin");
+VirtualDub.video.SetCompData(20,"AAAAAAQAAAAKAAAAAwAAAAQAAAA=");
+VirtualDub.SaveFormatAVI();
+VirtualDub.SaveAudioFormat("");
+VirtualDub.video.filters.BeginUpdate();
+VirtualDub.video.filters.Clear();
+VirtualDub.video.filters.Add("Deshaker v3.1");
+VirtualDub.video.filters.instance[0].Config("19|1|16|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|0|2|8|30|300|4|C:\\users\\archeopternix\\Local Settings\\Application Data\\Deshaker\\Deshaker.log|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|0|0|1|0|0|10|1000|1|88|1|1|20|5000|100|20|1|0|ff00ff");
+VirtualDub.video.filters.EndUpdate();
+VirtualDub.audio.filters.Clear();
+VirtualDub.video.SetRange();
+VirtualDub.project.ClearTextInfo();
+  // -- $reloadstop --
+VirtualDub.RunNullVideoPass();
+VirtualDub.audio.SetSource(1);
+VirtualDub.Close();
+
+// $endjob
+//
+//--------------------------------------------------
+// $job "Job 2"
+// $data ""
+// $input "Z:\home\archeopternix\Videos\2026 Skifahren\20260207_203328.mp4"
+// $output "Z:\home\archeopternix\go\src\go-mediafileinfo\testdata\20260207_203328.mov"
+// $state 0
+// $id c7f8a49b04dd0e45
+// $start_time 00000000 00000000
+// $end_time 00000000 00000000
+// $script
+
+VirtualDub.Open("Z:\\home\\archeopternix\\Videos\\2026 Skifahren\\20260207_203328.mp4","",0);
+VirtualDub.audio.SetSource(1);
+VirtualDub.audio.SetMode(1);
+VirtualDub.audio.SetInterleave(1,500,1,0,0);
+VirtualDub.audio.SetClipMode(1,1);
+VirtualDub.audio.SetEditMode(1);
+VirtualDub.audio.SetConversion(0,0,0,0,0);
+VirtualDub.audio.SetVolume();
+VirtualDub.audio.SetCompression();
+VirtualDub.audio.EnableFilterGraph(0);
+VirtualDub.video.SetInputFormat(0);
+VirtualDub.video.SetOutputFormat(7);
+VirtualDub.video.SetMode(3);
+VirtualDub.video.SetSmartRendering(0);
+VirtualDub.video.SetPreserveEmptyFrames(0);
+VirtualDub.video.SetFrameRate2(0,0,1);
+VirtualDub.video.SetIVTC(0, 0, 0, 0);
+VirtualDub.video.SetCompression(0x68637061,0,10000,0,"avlib-1.vdplugin");
+VirtualDub.video.SetCompData(20,"AAAAAAQAAAAKAAAAAwAAAAQAAAA=");
+VirtualDub.SaveFormat("ffmpeg","mov");
+VirtualDub.SaveAudioFormat("");
+VirtualDub.video.filters.BeginUpdate();
+VirtualDub.video.filters.Clear();
+VirtualDub.video.filters.Add("Deshaker v3.1");
+VirtualDub.video.filters.instance[0].Config("19|2|16|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|0|2|8|30|300|4|C:\\users\\archeopternix\\Local Settings\\Application Data\\Deshaker\\Deshaker.log|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|0|0|1|0|0|10|1000|1|88|1|1|20|5000|100|20|1|0|ff00ff");
+VirtualDub.video.filters.EndUpdate();
+VirtualDub.audio.filters.Clear();
+VirtualDub.video.SetRange();
+VirtualDub.project.ClearTextInfo();
+  // -- $reloadstop --
+VirtualDub.SaveAVI("Z:\\home\\archeopternix\\go\\src\\go-mediafileinfo\\testdata\\20260207_203328.mov");
+VirtualDub.audio.SetSource(1);
+VirtualDub.Close();
+
+// $endjob
+//
+//--------------------------------------------------
+// $done
