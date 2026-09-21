@@ -1,9 +1,15 @@
 plugin_name: Deshaker v3.1
 
 analysis_script: |
-  # TODO: Hier den exportierten Deshaker-Pass-1-Block einfügen.
-  # Verfügbare Platzhalter: {{.InputPath}}, {{.OutputPath}}, {{.LogPath}}
+  VirtualDub.video.filters.BeginUpdate();
+  VirtualDub.video.filters.Clear();
+  VirtualDub.video.filters.Add("Deshaker v3.1");
+  VirtualDub.video.filters.instance[0].Config("19|1|30|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|1|2|8|30|300|4|{{.LogFile}}|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|1|0|1|1|0|10|1000|1|38|1|1|20|5000|100|20|1|0|ff00ff");
+  VirtualDub.video.filters.EndUpdate();
 
 render_script: |
-  # TODO: Hier den exportierten Deshaker-Pass-2-Block einfügen.
-  # Verfügbare Platzhalter: {{.InputPath}}, {{.OutputPath}}, {{.LogPath}}
+  VirtualDub.video.filters.BeginUpdate();
+  VirtualDub.video.filters.Clear();
+  VirtualDub.video.filters.Add("Deshaker v3.1");
+  VirtualDub.video.filters.instance[0].Config("19|2|30|4|1|0|1|0|640|480|1|2|1000|1000|1000|1000|4|1|1|2|8|30|300|4|{{.LogFile}}|0|0|0|0|0|0|0|0|0|0|0|0|0|1|15|15|5|15|1|1|30|30|0|0|1|0|1|1|0|10|1000|1|38|1|1|20|5000|100|20|1|0|ff00ff");
+  VirtualDub.video.filters.EndUpdate();

@@ -11,4 +11,4 @@ audio_script: |
   # TODO: Hier die gewünschte Audiokonfiguration einfügen.
 
 save_script: |
-  VirtualDub.SaveAVI("{{.OutputPath}}");
+  VirtualDub.SaveAVI("{{.OutFile}}");

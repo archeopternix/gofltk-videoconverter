@@ -1,0 +1,16 @@
+version: 1
+id: fullhd-progressive
+name: Full HD progressive 25/30/50/60p
+priority: 80
+
+match:
+  interlaced: false
+  width: 1920
+  height: 1080
+  fps: [25, 29.97, 30, 50, 59.94, 60]
+  fps_tolerance: 0.06
+
+workflow:
+  - id: stabilize
+    filter: virtualdub.deshaker
+    config: {}

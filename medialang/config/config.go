@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,10 +17,15 @@ type App struct {
 
 type Tools struct {
 	FFprobe    FFprobeTool    `yaml:"ffprobe"`
+	FFmpeg     FFmpegTool     `yaml:"ffmpeg"`
 	VirtualDub VirtualDubTool `yaml:"virtualdub"`
 }
 
 type FFprobeTool struct {
+	Path string `yaml:"path"`
+}
+
+type FFmpegTool struct {
 	Path string `yaml:"path"`
 }
 
@@ -40,6 +46,7 @@ type WindowsPathMap struct {
 type Paths struct {
 	Workflows        string `yaml:"workflows"`
 	AviSynthProfiles string `yaml:"avisynth_profiles"`
+	AviSynth         string `yaml:"avisynth"`
 	VirtualDubCodecs string `yaml:"virtualdub_codecs"`
 	Deshaker         string `yaml:"deshaker"`
 }
@@ -66,12 +73,16 @@ func Load(filename string) (*App, error) {
 		return nil, fmt.Errorf("resolve config directory: %w", err)
 	}
 	app.resolvePaths(base)
+	if err := app.validate(); err != nil {
+		return nil, err
+	}
 	return &app, nil
 }
 
 func (a *App) resolvePaths(base string) {
 	a.Paths.Workflows = resolve(base, a.Paths.Workflows)
 	a.Paths.AviSynthProfiles = resolve(base, a.Paths.AviSynthProfiles)
+	a.Paths.AviSynth = resolve(base, a.Paths.AviSynth)
 	a.Paths.VirtualDubCodecs = resolve(base, a.Paths.VirtualDubCodecs)
 	a.Paths.Deshaker = resolve(base, a.Paths.Deshaker)
 	a.Processing.OutputDir = resolve(base, a.Processing.OutputDir)
@@ -82,8 +93,31 @@ func (a *App) resolvePaths(base string) {
 }
 
 func resolve(base, path string) string {
-	if path == "" || filepath.IsAbs(path) {
+	if path == "" {
+		return ""
+	}
+	if filepath.IsAbs(path) {
 		return filepath.Clean(path)
 	}
 	return filepath.Clean(filepath.Join(base, path))
+}
+
+func (a *App) validate() error {
+	if strings.TrimSpace(a.Tools.FFprobe.Path) == "" {
+		return fmt.Errorf("config key tools.ffprobe.path is required")
+	}
+	if strings.TrimSpace(a.Paths.Workflows) == "" {
+		return fmt.Errorf("config key paths.workflows is required")
+	}
+	if strings.TrimSpace(a.Processing.OutputDir) == "" {
+		return fmt.Errorf("config key processing.output_dir is required")
+	}
+	if strings.TrimSpace(a.Processing.WorkDir) == "" {
+		return fmt.Errorf("config key processing.work_dir is required")
+	}
+	mode := strings.ToLower(strings.TrimSpace(a.Tools.VirtualDub.PathMode))
+	if mode != "" && mode != "windows" && mode != "wine" {
+		return fmt.Errorf("config key tools.virtualdub.path_mode must be windows or wine")
+	}
+	return nil
 }

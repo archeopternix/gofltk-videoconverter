@@ -1,6 +1,10 @@
 package workflow
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+)
 
 type Definition struct {
 	Version  int                    `yaml:"version"`
@@ -13,14 +17,36 @@ type Definition struct {
 }
 
 type MatchDefinition struct {
-	Interlaced   *bool    `yaml:"interlaced,omitempty"`
-	Width        int      `yaml:"width,omitempty"`
-	Height       int      `yaml:"height,omitempty"`
-	FPS          float64  `yaml:"fps,omitempty"`
-	FPSTolerance float64  `yaml:"fps_tolerance,omitempty"`
-	PixelFormat  []string `yaml:"pixel_format,omitempty"`
-	ColorSpace   []string `yaml:"color_space,omitempty"`
-	Codec        []string `yaml:"codec,omitempty"`
+	Interlaced   *bool     `yaml:"interlaced,omitempty"`
+	Width        int       `yaml:"width,omitempty"`
+	Height       int       `yaml:"height,omitempty"`
+	FPS          FloatList `yaml:"fps,omitempty"`
+	FPSTolerance float64   `yaml:"fps_tolerance,omitempty"`
+	PixelFormat  []string  `yaml:"pixel_format,omitempty"`
+	ColorSpace   []string  `yaml:"color_space,omitempty"`
+	Codec        []string  `yaml:"codec,omitempty"`
+}
+
+type FloatList []float64
+
+func (f *FloatList) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.SequenceNode {
+		var values []float64
+		if err := node.Decode(&values); err != nil {
+			return err
+		}
+		*f = FloatList(values)
+		return nil
+	}
+	if node.Kind == yaml.ScalarNode {
+		var value float64
+		if err := node.Decode(&value); err != nil {
+			return err
+		}
+		*f = FloatList{value}
+		return nil
+	}
+	return fmt.Errorf("fps must be a number or a list of numbers")
 }
 
 type FilterNodeDefinition struct {

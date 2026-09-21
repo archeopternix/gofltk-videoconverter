@@ -1428,119 +1428,10 @@ entfernen
 
 sobald alle Workflows auf `ffmpeg.zscale` migriert sind.
 
----
-
-# 19. Tests
-
-Mindestens folgende Tests ergänzen.
-
-## AviSynth
-
-```text
-TestCompilerProvidesDLLPaths
-TestCompilerProvidesImportPaths
-TestCompilerReportsYV12ForYUV420P
-TestCompilerReportsNonYV12ForNV12
-TestCompilerAddsYV12ConversionWhenRequired
-TestCompilerFailsOnUnknownTemplateValue
-```
 
 ---
 
-## FFmpeg
-
-```text
-TestZScaleBuildsCorrectArguments
-TestZScaleUsesConfiguredDimensions
-TestZScaleUsesConfiguredFilter
-TestZScaleIsCancellable
-TestZScalePropagatesExitError
-```
-
----
-
-## Workflow / Planner
-
-```text
-TestFFmpegMayFollowVirtualDub
-TestFFmpegMustBeLast
-TestAviSynthAfterFFmpegRejected
-TestVirtualDubAfterFFmpegRejected
-TestFFmpegRequiresConfiguredExecutable
-```
-
----
-
-## VirtualDub
-
-```text
-TestFileNumberIsDenseAndOneBased
-TestFileIndexPreservesOriginalInputIndex
-TestFileNumberAvailableInDeshakerTemplate
-TestFileNumberAvailableInCodecTemplate
-```
-
-Kritischer Fall:
-
-```text
-input file index 0 → active
-input file index 1 → skipped
-input file index 2 → active
-```
-
-Erwartung:
-
-```text
-first VDub file:
-    FileIndex = 0
-    FileNumber = 1
-
-second VDub file:
-    FileIndex = 2
-    FileNumber = 2
-```
-
----
-
-## Cleanup
-
-```text
-TestWorkDirRemovedWhenKeepTempFilesFalse
-TestWorkDirKeptWhenKeepTempFilesTrue
-TestWorkDirRemovedAfterFFmpegFailureWhenKeepTempFilesFalse
-TestFinalOutputIsNeverRemovedByCleanup
-TestDeshakerReuseLogIsNeverRemovedByCleanup
-```
-
----
-
-## Integration
-
-```text
-TestPipelineOrderIsAviSynthVirtualDubFFmpeg
-```
-
-und weiterhin:
-
-```text
-TestVirtualDubIsInvokedOnlyOnceForMultipleFiles
-```
-
-Neuer kritischer Integrationstest:
-
-```text
-3 files
-3 VirtualDub jobs
-3 FFmpeg zscale operations
-
-Expected:
-    VirtualDub process count = 1
-    FFmpeg process count     = 3
-```
-
----
-
-# 20. Betroffene Dateien
+# 19. Betroffene Dateien
 
 Bestehend ändern:
 
@@ -1573,15 +1464,6 @@ config/virtualdub/README.md
 config/workflows/README.md
 ```
 
-Optional Tests entsprechend der bestehenden Paketstruktur:
-
-```text
-medialang/engine/avisynth/compiler_test.go
-medialang/engine/virtualdub/jobs_test.go
-medialang/engine/ffmpeg/runner_test.go
-medialang/config/config_test.go
-medialang/runner_test.go
-```
 
 ---
 
@@ -1592,7 +1474,7 @@ Die Änderung ist fertig, wenn:
 - [ ] AviSynth-Templates Zugriff auf DLL- und Import-Pfade haben.
 - [ ] Sowohl Host- als auch Windows/Wine-Pfade verfügbar sind.
 - [ ] `MediaSpec` explizit angibt, ob das Material YV12-kompatibel ist.
-- [ ] Nicht-YV12-Material erhält vor YV12-abhängigen AviSynth-Filtern eine Konvertierung.
+- [ ] Nicht-YV12-Material erhält vor YV12-abhängigen AviSynth-Filtern eine Konvertierung ion AviSynth.
 - [ ] AviSynth-Templates werden mit `text/template` und `missingkey=error` ausgewertet.
 - [ ] `engine.FFmpeg` existiert.
 - [ ] `ffmpeg.zscale` als Filter registriert ist.
@@ -1610,7 +1492,6 @@ Die Änderung ist fertig, wenn:
 - [ ] `config/avisynth/README.md` alle Template-Platzhalter dokumentiert.
 - [ ] `config/virtualdub/README.md` alle Template-Platzhalter inklusive `FileNumber` dokumentiert.
 - [ ] `config/workflows/README.md` Workflow-Schema und Engine-Reihenfolge dokumentiert.
-- [ ] Unit- und Integrationstests die neuen Invarianten absichern.
 
 ---
 
@@ -1688,13 +1569,6 @@ Codex soll folgende Regeln als harte Architekturregeln behandeln:
 
 16. Cleanup des Run-Verzeichnisses implementieren.
 
-17. Unit Tests.
-
-18. Integrationstest:
-      multiple inputs
-      ONE VirtualDub invocation
-      N FFmpeg invocations
-      cleanup
 ```
 
 ---

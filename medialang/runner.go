@@ -12,6 +12,7 @@ import (
 	"github.com/archeopternix/gofltk-videoconverter/medialang/config"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/engine"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/engine/avisynth"
+	ffmpegengine "github.com/archeopternix/gofltk-videoconverter/medialang/engine/ffmpeg"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/engine/virtualdub"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/filter"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/media"
@@ -51,26 +52,22 @@ type Runner struct {
 }
 
 type plannedFile struct {
-	index    int
-	input    media.Artifact
-	workflow *workflow.Definition
-	profile  *filter.AviSynthProfile
-	deshaker *filter.Deshaker
-	codec    *virtualdub.CodecPreset
-	output   string
-	log      string
-	current  media.Artifact
-	result   *FileResult
+	fileIndex        int
+	input            media.Artifact
+	profile          *filter.AviSynthProfile
+	deshaker         *filter.Deshaker
+	deshakerTemplate *virtualdub.DeshakerTemplate
+	codec            *virtualdub.CodecPreset
+	ffmpegScale      *filter.ZScale
+	virtualDubOutput string
+	finalOutput      string
+	current          media.Artifact
+	readyForFFmpeg   bool
+	result           *FileResult
 }
 
 func NewRunner(app *config.App, files []string) *Runner {
-	return &Runner{
-		Config:   app,
-		Files:    append([]string(nil), files...),
-		Probe:    probe.FFProbe{Executable: app.Tools.FFprobe.Path},
-		Registry: filter.DefaultRegistry(),
-		Logger:   slog.Default(),
-	}
+	return &Runner{Config: app, Files: append([]string(nil), files...), Probe: probe.FFProbe{Executable: app.Tools.FFprobe.Path}, Registry: filter.DefaultRegistry(), Logger: slog.Default()}
 }
 
 func (r *Runner) Run(ctx context.Context) (*BatchResult, error) {
@@ -84,14 +81,18 @@ func (r *Runner) Run(ctx context.Context) (*BatchResult, error) {
 	if err != nil {
 		return result, err
 	}
-	store := virtualdub.ConfigStore{
-		CodecsDir:    r.Config.Paths.VirtualDubCodecs,
-		DeshakerFile: r.Config.Paths.Deshaker,
-	}
+	store := virtualdub.ConfigStore{CodecsDir: r.Config.Paths.VirtualDubCodecs, DeshakerFile: r.Config.Paths.Deshaker}
 	pather := virtualdub.NewPathConverter(r.Config.Tools.VirtualDub)
 	workDir := filepath.Join(r.Config.Processing.WorkDir, runID)
 	if err := os.MkdirAll(workDir, 0o755); err != nil {
 		return result, fmt.Errorf("create run directory %q: %w", workDir, err)
+	}
+	if !r.Config.Processing.KeepFiles {
+		defer func() {
+			if err := os.RemoveAll(workDir); err != nil {
+				r.Logger.Warn("cleanup work directory failed", "directory", workDir, "error", err)
+			}
+		}()
 	}
 	if err := os.MkdirAll(r.Config.Processing.OutputDir, 0o755); err != nil {
 		return result, fmt.Errorf("create output directory %q: %w", r.Config.Processing.OutputDir, err)
@@ -104,32 +105,31 @@ func (r *Runner) Run(ctx context.Context) (*BatchResult, error) {
 			markRemainingCancelled(result, i, err)
 			return result, err
 		}
-		file, err := r.planFile(ctx, i, filename, &result.Files[i], catalog, store)
+		file, err := r.planFile(ctx, filename, &result.Files[i], catalog, store)
 		if err != nil {
 			r.skip(&result.Files[i], err)
 			continue
 		}
-		key := strings.ToLower(filepath.Clean(file.output))
+		key := strings.ToLower(filepath.Clean(file.finalOutput))
 		if _, exists := outputs[key]; exists {
-			r.skip(&result.Files[i], fmt.Errorf("output path is already used in this run: %s", file.output))
+			r.skip(&result.Files[i], fmt.Errorf("output path is already used in this run: %s", file.finalOutput))
 			continue
 		}
 		outputs[key] = struct{}{}
 		planned = append(planned, file)
 	}
 
-	avsCompiler := avisynth.Compiler{ProfilesDir: r.Config.Paths.AviSynthProfiles, Pather: pather}
-	jobs := make([]virtualdub.Job, 0, len(planned))
-	active := make([]*plannedFile, 0, len(planned))
+	avsCompiler := avisynth.Compiler{ProfilesDir: r.Config.Paths.AviSynthProfiles, AviSynthPath: r.Config.Paths.AviSynth, Pather: pather}
+	prepared := make([]*plannedFile, 0, len(planned))
 	for _, file := range planned {
 		if err := ctx.Err(); err != nil {
-			file.result.Status = StatusCancelled
-			file.result.Error = err
+			file.result.Status, file.result.Error = StatusCancelled, err
 			continue
 		}
+		file.fileIndex = len(prepared) + 1
 		file.current = file.input
 		if file.profile != nil {
-			avsPath := filepath.Join(workDir, "avisynth", fmt.Sprintf("%04d-%s.avs", file.index, safeBase(file.input.Path)))
+			avsPath := filepath.Join(workDir, indexedName(file.fileIndex, file.input.Path, ".avs"))
 			artifact, err := avsCompiler.Compile(file.current, file.profile, avsPath)
 			if err != nil {
 				r.skip(file.result, err)
@@ -137,76 +137,86 @@ func (r *Runner) Run(ctx context.Context) (*BatchResult, error) {
 			}
 			file.current = artifact
 		}
+		prepared = append(prepared, file)
+	}
 
-		var deshakerConfig *virtualdub.DeshakerTemplate
-		if file.deshaker != nil {
-			loaded, err := store.LoadDeshaker()
-			if err != nil {
-				r.skip(file.result, err)
-				continue
+	jobs := make([]virtualdub.Job, 0, len(prepared))
+	virtualDubFiles := make([]*plannedFile, 0, len(prepared))
+	for _, file := range prepared {
+		if file.deshaker == nil {
+			file.readyForFFmpeg = file.ffmpegScale != nil
+			continue
+		}
+		logPath := filepath.Join(workDir, indexedName(file.fileIndex, file.input.Path, ".log"))
+		if file.ffmpegScale != nil {
+			file.virtualDubOutput = filepath.Join(workDir, indexedName(file.fileIndex, file.input.Path, ".avi"))
+		} else {
+			file.virtualDubOutput = file.finalOutput
+		}
+		jobs = append(jobs, virtualdub.Job{FileIndex: file.fileIndex, InputPath: file.current.Path, OutputPath: file.virtualDubOutput, LogPath: logPath, Deshaker: file.deshakerTemplate, Codec: file.codec})
+		virtualDubFiles = append(virtualDubFiles, file)
+	}
+
+	if len(jobs) > 0 {
+		jobsFile := filepath.Join(workDir, "medialang.jobs")
+		result.JobsFile = jobsFile
+		builder := virtualdub.JobsBuilder{Pather: pather, TemplateDir: filepath.Dir(r.Config.Paths.Deshaker)}
+		if _, err := builder.Write(jobsFile, jobs); err != nil {
+			for _, file := range virtualDubFiles {
+				r.fail(file.result, err)
 			}
-			deshakerConfig = loaded
-		}
-		job := virtualdub.Job{
-			FileIndex:  file.index,
-			InputPath:  file.current.Path,
-			OutputPath: file.output,
-			LogPath:    file.log,
-			Deshaker:   deshakerConfig,
-			Codec:      file.codec,
-		}
-		if file.deshaker != nil {
-			job.ReuseAnalysis = file.deshaker.Config.ReuseAnalysis
-			job.ForceAnalysis = file.deshaker.Config.ForceAnalysis
-		}
-		jobs = append(jobs, job)
-		active = append(active, file)
-	}
-
-	if len(jobs) == 0 {
-		return result, ctx.Err()
-	}
-	jobsFile := filepath.Join(workDir, "virtualdub", "medialang.jobs")
-	result.JobsFile = jobsFile
-	builder := virtualdub.JobsBuilder{Pather: pather}
-	if _, err := builder.Write(jobsFile, jobs); err != nil {
-		for _, file := range active {
-			r.fail(file.result, err)
-		}
-		return result, err
-	}
-
-	vdubRunner := virtualdub.Runner{Tool: r.Config.Tools.VirtualDub, Pather: pather}
-	if _, err := vdubRunner.Run(ctx, jobsFile); err != nil {
-		status := StatusFailed
-		if ctx.Err() != nil {
-			status = StatusCancelled
-		}
-		for _, file := range active {
-			file.result.Status = status
-			file.result.Error = err
-		}
-		return result, err
-	}
-
-	for _, file := range active {
-		info, err := os.Stat(file.output)
-		if err != nil || info.Size() == 0 {
-			if err == nil {
-				err = fmt.Errorf("output is empty: %s", file.output)
-			} else {
-				err = fmt.Errorf("output was not created %q: %w", file.output, err)
+		} else {
+			vdubRunner := virtualdub.Runner{Tool: r.Config.Tools.VirtualDub, Pather: pather}
+			_, runErr := vdubRunner.Run(ctx, jobsFile)
+			for _, file := range virtualDubFiles {
+				if err := verifyOutput(file.virtualDubOutput); err != nil {
+					if runErr != nil {
+						err = fmt.Errorf("VirtualDub failed: %v; %w", runErr, err)
+					}
+					r.fail(file.result, err)
+					continue
+				}
+				file.current = media.Artifact{Path: file.virtualDubOutput, Type: media.ArtifactVideo, Media: file.input.Media}
+				if file.ffmpegScale == nil {
+					file.result.Status, file.result.Error = StatusCompleted, nil
+				} else {
+					file.readyForFFmpeg = true
+				}
 			}
+		}
+	}
+
+	ffmpegRunner := ffmpegengine.Runner{Executable: r.Config.Tools.FFmpeg.Path}
+	for _, file := range prepared {
+		if file.ffmpegScale == nil || !file.readyForFFmpeg {
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			file.result.Status, file.result.Error = StatusCancelled, err
+			continue
+		}
+		if err := ffmpegRunner.Run(ctx, file.current.Path, file.finalOutput, file.ffmpegScale.Config); err != nil {
 			r.fail(file.result, err)
 			continue
 		}
-		file.result.Status = StatusCompleted
-		file.result.Error = nil
+		if err := verifyOutput(file.finalOutput); err != nil {
+			r.fail(file.result, err)
+			continue
+		}
+		if file.virtualDubOutput != "" {
+			if err := os.Remove(file.virtualDubOutput); err != nil && !os.IsNotExist(err) {
+				r.Logger.Warn("cleanup HuffYUV intermediate failed", "file", file.virtualDubOutput, "error", err)
+			}
+		}
+		file.result.Status, file.result.Error = StatusCompleted, nil
+	}
+	if err := ctx.Err(); err != nil {
+		return result, err
 	}
 	return result, nil
 }
 
-func (r *Runner) planFile(ctx context.Context, index int, filename string, result *FileResult, catalog *workflow.Catalog, store virtualdub.ConfigStore) (*plannedFile, error) {
+func (r *Runner) planFile(ctx context.Context, filename string, result *FileResult, catalog *workflow.Catalog, store virtualdub.ConfigStore) (*plannedFile, error) {
 	abs, err := filepath.Abs(filename)
 	if err != nil {
 		return nil, err
@@ -219,92 +229,134 @@ func (r *Runner) planFile(ctx context.Context, index int, filename string, resul
 	if err != nil {
 		return nil, err
 	}
-	result.Input = abs
-	result.Workflow = definition.ID
-
-	file := &plannedFile{
-		index:    index,
-		input:    media.Artifact{Path: abs, Type: media.ArtifactSource, Media: spec},
-		workflow: definition,
-		result:   result,
-	}
-	virtualDubSeen := false
-	encodeSeen := false
+	result.Input, result.Workflow = abs, definition.ID
+	file := &plannedFile{input: media.Artifact{Path: abs, Type: media.ArtifactSource, Media: spec}, result: result}
+	lastEngineRank, activeFilters := -1, 0
 	for _, node := range definition.Workflow {
 		if !node.IsEnabled() {
 			continue
 		}
+		activeFilters++
 		instance, err := r.Registry.Create(node.ID, node.Filter, node.Config)
 		if err != nil {
 			return nil, fmt.Errorf("workflow %q: %w", definition.ID, err)
 		}
+		rank := engineRank(instance.Engine())
+		if rank < lastEngineRank {
+			return nil, fmt.Errorf("workflow %q has invalid engine order at filter %q", definition.ID, node.ID)
+		}
+		lastEngineRank = rank
 		switch typed := instance.(type) {
 		case *filter.AviSynthProfile:
-			if virtualDubSeen || file.profile != nil {
-				return nil, fmt.Errorf("workflow %q has an unsupported AviSynth position", definition.ID)
+			if file.profile != nil {
+				return nil, fmt.Errorf("workflow %q contains multiple AviSynth profiles", definition.ID)
+			}
+			if r.Config.Paths.AviSynthProfiles == "" {
+				return nil, fmt.Errorf("workflow %q uses avisynth.profile but paths.avisynth_profiles is empty", definition.ID)
 			}
 			file.profile = typed
 		case *filter.Deshaker:
-			if encodeSeen || file.deshaker != nil {
-				return nil, fmt.Errorf("workflow %q has an unsupported Deshaker position", definition.ID)
+			if file.deshaker != nil {
+				return nil, fmt.Errorf("workflow %q contains multiple Deshaker filters", definition.ID)
 			}
-			virtualDubSeen = true
+			if r.Config.Tools.VirtualDub.Executable == "" || r.Config.Paths.Deshaker == "" || r.Config.Paths.VirtualDubCodecs == "" {
+				return nil, fmt.Errorf("workflow %q uses virtualdub.deshaker but its tool or config paths are empty", definition.ID)
+			}
 			file.deshaker = typed
-		case *filter.Encode:
-			if encodeSeen {
-				return nil, fmt.Errorf("workflow %q contains multiple encoders", definition.ID)
+		case *filter.ZScale:
+			if file.ffmpegScale != nil {
+				return nil, fmt.Errorf("workflow %q contains multiple ffmpeg.zscale filters", definition.ID)
 			}
-			virtualDubSeen = true
-			encodeSeen = true
-			codec, err := store.LoadCodec(typed.Config.Preset)
-			if err != nil {
-				return nil, err
+			if r.Config.Tools.FFmpeg.Path == "" {
+				return nil, fmt.Errorf("workflow %q uses ffmpeg.zscale but tools.ffmpeg.path is empty", definition.ID)
 			}
-			file.codec = codec
+			file.ffmpegScale = typed
 		default:
 			return nil, fmt.Errorf("workflow %q contains unsupported filter %q", definition.ID, instance.Type())
 		}
-		if instance.Engine() != engine.AviSynth && instance.Engine() != engine.VirtualDub {
-			return nil, fmt.Errorf("workflow %q contains unsupported engine %q", definition.ID, instance.Engine())
+	}
+	if activeFilters == 0 {
+		return nil, fmt.Errorf("workflow %q contains no active filters", definition.ID)
+	}
+	if file.deshaker == nil && file.ffmpegScale == nil {
+		return nil, fmt.Errorf("workflow %q has no final media writer", definition.ID)
+	}
+	if file.deshaker != nil {
+		file.deshakerTemplate, err = store.LoadDeshaker()
+		if err != nil {
+			return nil, err
+		}
+		codecID := "prores-pcm-mov"
+		if file.ffmpegScale != nil {
+			codecID = "huffyuv"
+		}
+		file.codec, err = store.LoadCodec(codecID)
+		if err != nil {
+			return nil, err
 		}
 	}
-	if file.codec == nil {
-		return nil, fmt.Errorf("workflow %q has no VirtualDub encoder", definition.ID)
-	}
-
 	base := strings.TrimSuffix(filepath.Base(abs), filepath.Ext(abs)) + "_processed"
-	file.output = filepath.Join(r.Config.Processing.OutputDir, base+file.codec.Extension)
-	file.log = filepath.Join(r.Config.Processing.OutputDir, base+".deshaker.log")
-	result.Output = file.output
+	extension := ".mov"
+	if file.ffmpegScale != nil {
+		extension = file.ffmpegScale.Config.Extension
+	} else if file.codec != nil {
+		extension = file.codec.Extension
+	}
+	file.finalOutput = filepath.Join(r.Config.Processing.OutputDir, base+extension)
+	result.Output = file.finalOutput
 	return file, nil
 }
 
+func engineRank(engineType engine.Type) int {
+	switch engineType {
+	case engine.AviSynth:
+		return 0
+	case engine.VirtualDub:
+		return 1
+	case engine.FFmpeg:
+		return 2
+	default:
+		return 100
+	}
+}
+
+func verifyOutput(filename string) error {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return fmt.Errorf("output was not created %q: %w", filename, err)
+	}
+	if info.Size() == 0 {
+		return fmt.Errorf("output is empty: %s", filename)
+	}
+	return nil
+}
+
 func (r *Runner) skip(result *FileResult, err error) {
-	result.Status = StatusSkipped
-	result.Error = err
+	result.Status, result.Error = StatusSkipped, err
 	r.Logger.Error("file skipped", "file", result.Input, "error", err)
 }
 
 func (r *Runner) fail(result *FileResult, err error) {
-	result.Status = StatusFailed
-	result.Error = err
+	result.Status, result.Error = StatusFailed, err
 	r.Logger.Error("file failed", "file", result.Input, "error", err)
 }
 
 func markRemainingCancelled(result *BatchResult, start int, err error) {
 	for i := start; i < len(result.Files); i++ {
-		result.Files[i].Status = StatusCancelled
-		result.Files[i].Error = err
+		result.Files[i].Status, result.Files[i].Error = StatusCancelled, err
 	}
+}
+
+func indexedName(index int, path, extension string) string {
+	return fmt.Sprintf("%04d-%s%s", index, safeBase(path), extension)
 }
 
 func safeBase(path string) string {
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	base = strings.Map(func(r rune) rune {
+	return strings.Map(func(r rune) rune {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
 			return r
 		}
 		return '_'
 	}, base)
-	return base
 }

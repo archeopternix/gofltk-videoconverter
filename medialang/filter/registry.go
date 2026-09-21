@@ -21,8 +21,31 @@ func DefaultRegistry() *Registry {
 	registry := NewRegistry()
 	registry.Register("avisynth.profile", newAviSynthProfile)
 	registry.Register("virtualdub.deshaker", newDeshaker)
-	registry.Register("virtualdub.encode", newEncode)
+	registry.Register("ffmpeg.zscale", newZScale)
 	return registry
+}
+
+func newZScale(nodeID string, node yaml.Node) (Filter, error) {
+	var config ZScaleConfig
+	if err := node.Decode(&config); err != nil {
+		return nil, fmt.Errorf("decode zscale filter %q: %w", nodeID, err)
+	}
+	if config.Filter == "" {
+		config.Filter = "spline36"
+	}
+	if config.PixelFormat == "" {
+		config.PixelFormat = "yuv420p"
+	}
+	if config.Width <= 0 || config.Height <= 0 || config.VideoCodec == "" || config.AudioCodec == "" || config.Extension == "" {
+		return nil, fmt.Errorf("ffmpeg.zscale %q requires width, height, video_codec, audio_codec and extension", nodeID)
+	}
+	if config.Extension[0] != '.' {
+		config.Extension = "." + config.Extension
+	}
+	return &ZScale{
+		base:   base{nodeID: nodeID, filterType: "ffmpeg.zscale", engineType: engine.FFmpeg},
+		Config: config,
+	}, nil
 }
 
 func (r *Registry) Register(filterType string, factory Factory) {
@@ -58,20 +81,6 @@ func newDeshaker(nodeID string, node yaml.Node) (Filter, error) {
 	}
 	return &Deshaker{
 		base:   base{nodeID: nodeID, filterType: "virtualdub.deshaker", engineType: engine.VirtualDub},
-		Config: config,
-	}, nil
-}
-
-func newEncode(nodeID string, node yaml.Node) (Filter, error) {
-	var config EncodeConfig
-	if err := node.Decode(&config); err != nil {
-		return nil, fmt.Errorf("decode encode filter %q: %w", nodeID, err)
-	}
-	if config.Preset == "" {
-		return nil, fmt.Errorf("encode filter %q has no preset", nodeID)
-	}
-	return &Encode{
-		base:   base{nodeID: nodeID, filterType: "virtualdub.encode", engineType: engine.VirtualDub},
 		Config: config,
 	}, nil
 }

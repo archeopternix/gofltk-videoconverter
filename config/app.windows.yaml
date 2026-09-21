@@ -2,6 +2,9 @@ tools:
   ffprobe:
     path: C:/Program Files/ffmpeg/bin/ffprobe.exe
 
+  ffmpeg:
+    path: C:/Program Files/ffmpeg/bin/ffmpeg.exe
+
   virtualdub:
     executable: C:/Program Files/VirtualDub2/VirtualDub64.exe
     arguments:
@@ -14,10 +17,11 @@ tools:
 paths:
   workflows: workflows
   avisynth_profiles: avisynth/profiles
+  avisynth: C:/Program Files/AviSynth+/plugins64+
   virtualdub_codecs: virtualdub/codecs
   deshaker: virtualdub/deshaker.yaml
 
 processing:
   output_dir: ../output
   work_dir: ../work
-  keep_temp_files: true
+  keep_temp_files: false

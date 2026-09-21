@@ -2,6 +2,9 @@ tools:
   ffprobe:
     path: ffprobe
 
+  ffmpeg:
+    path: ffmpeg
+
   # Linux: VirtualDub2 is launched through Wine. The jobs file and all media
   # paths are converted to Windows paths before VirtualDub sees them.
   virtualdub:
@@ -18,10 +21,11 @@ tools:
 paths:
   workflows: workflows
   avisynth_profiles: avisynth/profiles
+  avisynth: /opt/avisynth/plugins64+
   virtualdub_codecs: virtualdub/codecs
   deshaker: virtualdub/deshaker.yaml
 
 processing:
   output_dir: ../output
   work_dir: ../work
-  keep_temp_files: true
+  keep_temp_files: false

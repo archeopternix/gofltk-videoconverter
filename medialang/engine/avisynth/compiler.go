@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+	"text/template"
 
 	"github.com/archeopternix/gofltk-videoconverter/medialang/filter"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/media"
@@ -15,37 +15,67 @@ type WindowsPather interface {
 }
 
 type Compiler struct {
-	ProfilesDir string
-	Pather      WindowsPather
+	ProfilesDir  string
+	AviSynthPath string
+	Pather       WindowsPather
 }
 
 func (c Compiler) Compile(input media.Artifact, profile *filter.AviSynthProfile, outputPath string) (media.Artifact, error) {
 	filename := filepath.Join(c.ProfilesDir, profile.Config.Profile+".avs.tpl")
-	data, err := os.ReadFile(filename)
+	tpl, err := template.New(filepath.Base(filename)).Option("missingkey=error").ParseFiles(filename)
 	if err != nil {
-		return media.Artifact{}, fmt.Errorf("read AviSynth profile %q: %w", profile.Config.Profile, err)
+		return media.Artifact{}, fmt.Errorf("parse AviSynth profile %q: %w", profile.Config.Profile, err)
 	}
 
-	windowsPath, err := c.Pather.ToWindowsPath(input.Path)
+	inFile, err := c.Pather.ToWindowsPath(input.Path)
 	if err != nil {
 		return media.Artifact{}, fmt.Errorf("convert AviSynth input path %q: %w", input.Path, err)
 	}
-	script := string(data)
-	script = strings.ReplaceAll(script, "{{.InputPath}}", input.Path)
-	script = strings.ReplaceAll(script, "{{.InputPathWindows}}", windowsPath)
-	script = strings.ReplaceAll(script, "{{.Width}}", fmt.Sprint(input.Media.Width))
-	script = strings.ReplaceAll(script, "{{.Height}}", fmt.Sprint(input.Media.Height))
-	script = strings.ReplaceAll(script, "{{.FPS}}", fmt.Sprint(input.Media.FPS))
-	script = strings.ReplaceAll(script, "{{.FieldOrder}}", string(input.Media.FieldOrder))
-	for key, value := range profile.Config.Values {
-		script = strings.ReplaceAll(script, "{{."+key+"}}", value)
+	avisynthPath, err := optionalWindowsPath(c.Pather, c.AviSynthPath)
+	if err != nil {
+		return media.Artifact{}, fmt.Errorf("convert AviSynth path: %w", err)
 	}
+
+	values := make(map[string]any, len(profile.Config.Values)+14)
+	for key, value := range profile.Config.Values {
+		values[key] = value
+	}
+	values["AvisynthPath"] = avisynthPath
+	values["InFile"] = inFile
+	values["Deinterlace"] = input.Media.ScanType == media.ScanInterlaced
+	values["ConvertYV"] = !input.Media.IsYV12
+	values["Preset"] = profile.Config.Preset
+	values["ResizeX"] = profile.Config.ResizeX
+	values["ResizeY"] = profile.Config.ResizeY
+	values["Width"] = input.Media.Width
+	values["Height"] = input.Media.Height
+	values["FPS"] = input.Media.FPS
+	values["FieldOrder"] = input.Media.FieldOrder
+	values["PixelFormat"] = input.Media.PixelFormat
+	values["ColorSpace"] = input.Media.ColorSpace
+	values["ColorFamily"] = input.Media.ColorFamily
 
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
 		return media.Artifact{}, fmt.Errorf("create AviSynth directory: %w", err)
 	}
-	if err := os.WriteFile(outputPath, []byte(script), 0o644); err != nil {
-		return media.Artifact{}, fmt.Errorf("write AviSynth script %q: %w", outputPath, err)
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return media.Artifact{}, fmt.Errorf("create AviSynth script %q: %w", outputPath, err)
+	}
+	executeErr := tpl.ExecuteTemplate(file, "Avisynth", values)
+	closeErr := file.Close()
+	if executeErr != nil {
+		return media.Artifact{}, fmt.Errorf("render AviSynth profile %q: %w", profile.Config.Profile, executeErr)
+	}
+	if closeErr != nil {
+		return media.Artifact{}, fmt.Errorf("close AviSynth script %q: %w", outputPath, closeErr)
 	}
 	return media.Artifact{Path: outputPath, Type: media.ArtifactAviSynth, Media: input.Media}, nil
+}
+
+func optionalWindowsPath(pather WindowsPather, path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	return pather.ToWindowsPath(path)
 }

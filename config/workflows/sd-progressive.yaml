@@ -1,25 +1,16 @@
 version: 1
-id: dv-25i
-name: DV 576i25
-priority: 100
+id: sd-progressive
+name: 720x576 progressive 30/60p
+priority: 80
 
 match:
-  interlaced: true
+  interlaced: false
   width: 720
   height: 576
-  fps: 25
-  fps_tolerance: 0.1
-  codec: [dvvideo]
+  fps: [29.97, 30, 59.94, 60]
+  fps_tolerance: 0.06
 
 workflow:
-  - id: prepare
-    filter: avisynth.profile
-    config:
-      profile: dv-25i
-      preset: Slower
-      resize_x: 720
-      resize_y: 576
-
   - id: stabilize
     filter: virtualdub.deshaker
     config: {}

@@ -27,6 +27,7 @@ type MediaSpec struct {
 	PixelFormat string
 	ColorSpace  string
 	ColorFamily string
+	IsYV12      bool
 	AudioCodec  string
 }
 

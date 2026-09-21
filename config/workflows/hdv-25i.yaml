@@ -16,14 +16,10 @@ workflow:
     filter: avisynth.profile
     config:
       profile: hdv-25i
+      preset: Slower
+      resize_x: 1920
+      resize_y: 1080
 
   - id: stabilize
     filter: virtualdub.deshaker
-    config:
-      reuse_analysis: true
-      force_analysis: false
-
-  - id: encode
-    filter: virtualdub.encode
-    config:
-      preset: x264-8-aac-mp4
+    config: {}

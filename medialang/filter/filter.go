@@ -26,8 +26,11 @@ func (f base) Validate(input media.MediaSpec) (media.MediaSpec, error) {
 }
 
 type AviSynthProfileConfig struct {
-	Profile string            `yaml:"profile"`
-	Values  map[string]string `yaml:"values"`
+	Profile string         `yaml:"profile"`
+	Preset  string         `yaml:"preset"`
+	ResizeX int            `yaml:"resize_x"`
+	ResizeY int            `yaml:"resize_y"`
+	Values  map[string]any `yaml:"values"`
 }
 
 type AviSynthProfile struct {
@@ -35,21 +38,32 @@ type AviSynthProfile struct {
 	Config AviSynthProfileConfig
 }
 
-type DeshakerConfig struct {
-	ReuseAnalysis bool `yaml:"reuse_analysis"`
-	ForceAnalysis bool `yaml:"force_analysis"`
-}
+type DeshakerConfig struct{}
 
 type Deshaker struct {
 	base
 	Config DeshakerConfig
 }
 
-type EncodeConfig struct {
-	Preset string `yaml:"preset"`
+type ZScaleConfig struct {
+	Width        int      `yaml:"width"`
+	Height       int      `yaml:"height"`
+	Filter       string   `yaml:"filter"`
+	PixelFormat  string   `yaml:"pixel_format"`
+	PadWidth     int      `yaml:"pad_width,omitempty"`
+	PadHeight    int      `yaml:"pad_height,omitempty"`
+	PadX         int      `yaml:"pad_x,omitempty"`
+	PadY         int      `yaml:"pad_y,omitempty"`
+	VideoCodec   string   `yaml:"video_codec"`
+	CRF          *int     `yaml:"crf,omitempty"`
+	Preset       string   `yaml:"preset,omitempty"`
+	AudioCodec   string   `yaml:"audio_codec"`
+	AudioBitrate string   `yaml:"audio_bitrate,omitempty"`
+	Extension    string   `yaml:"extension"`
+	ExtraArgs    []string `yaml:"extra_args,omitempty"`
 }
 
-type Encode struct {
+type ZScale struct {
 	base
-	Config EncodeConfig
+	Config ZScaleConfig
 }

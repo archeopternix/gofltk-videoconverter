@@ -45,6 +45,9 @@ func LoadCatalog(directory string) (*Catalog, error) {
 		if err := yaml.Unmarshal(data, &definition); err != nil {
 			return nil, fmt.Errorf("parse workflow %q: %w", filename, err)
 		}
+		if definition.Version == 0 || definition.ID == "" || definition.Name == "" || len(definition.Workflow) == 0 {
+			return nil, fmt.Errorf("workflow %q requires version, id, name and workflow", filename)
+		}
 		definition.Source = filename
 		catalog.workflows = append(catalog.workflows, &definition)
 	}
@@ -94,12 +97,19 @@ func matches(match MatchDefinition, spec media.MediaSpec) bool {
 	if match.Height != 0 && match.Height != spec.Height {
 		return false
 	}
-	if match.FPS != 0 {
+	if len(match.FPS) > 0 {
 		tolerance := match.FPSTolerance
 		if tolerance == 0 {
 			tolerance = 0.01
 		}
-		if math.Abs(match.FPS-spec.FPS) > tolerance {
+		matched := false
+		for _, fps := range match.FPS {
+			if math.Abs(fps-spec.FPS) <= tolerance {
+				matched = true
+				break
+			}
+		}
+		if !matched {
 			return false
 		}
 	}
@@ -133,7 +143,7 @@ func specificity(match MatchDefinition) int {
 	if match.Width != 0 || match.Height != 0 {
 		result++
 	}
-	if match.FPS != 0 {
+	if len(match.FPS) > 0 {
 		result++
 	}
 	if len(match.PixelFormat) > 0 || len(match.ColorSpace) > 0 {

@@ -5,4 +5,5 @@ type Type string
 const (
 	AviSynth   Type = "avisynth"
 	VirtualDub Type = "virtualdub"
+	FFmpeg     Type = "ffmpeg"
 )

@@ -96,11 +96,21 @@ func (p FFProbe) Probe(ctx context.Context, filename string) (media.MediaSpec, e
 		PixelFormat: normalize(video.PixelFormat),
 		ColorSpace:  normalize(video.ColorSpace),
 		ColorFamily: colorFamily(video.PixelFormat),
+		IsYV12:      isYV12(video.PixelFormat),
 	}
 	if audio != nil {
 		spec.AudioCodec = normalize(audio.CodecName)
 	}
 	return spec, nil
+}
+
+func isYV12(pixelFormat string) bool {
+	switch normalize(pixelFormat) {
+	case "yuv420p", "yuvj420p":
+		return true
+	default:
+		return false
+	}
 }
 
 func rational(value string) float64 {

@@ -11,4 +11,4 @@ audio_script: |
   # TODO: Hier den exportierten PCM-Konfigurationsblock einfügen.
 
 save_script: |
-  VirtualDub.SaveAVI("{{.OutputPath}}");
+  VirtualDub.SaveAVI("{{.OutFile}}");

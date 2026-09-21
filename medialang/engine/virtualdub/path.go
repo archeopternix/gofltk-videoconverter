@@ -47,11 +47,7 @@ func (c *PathConverter) ToWindowsPath(path string) (string, error) {
 
 	mode := strings.ToLower(strings.TrimSpace(c.Mode))
 	if mode == "" {
-		if runtime.GOOS == "windows" {
-			mode = "windows"
-		} else {
-			mode = "wine"
-		}
+		mode = "windows"
 	}
 	if mode == "windows" {
 		if runtime.GOOS != "windows" {
