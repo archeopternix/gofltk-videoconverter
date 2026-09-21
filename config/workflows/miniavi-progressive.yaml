@@ -1,0 +1,32 @@
+version: 1
+id: miniavi-progressive
+name: 640x480 progressive 30/60p
+priority: 80
+
+match:
+  interlaced: false
+  width: 640
+  height: 480
+  fps: [29.97, 30, 59.94, 60]
+  fps_tolerance: 0.06
+
+workflow:
+  - id: stabilize
+    filter: virtualdub.deshaker
+    config: {}
+
+  - id: final-scale
+    filter: ffmpeg.zscale
+    config:
+      width: 1440
+      height: 1080
+      filter: spline36
+      pixel_format: yuv422p10le
+      pad_width: 1920
+      pad_height: 1080
+      pad_x: 240
+      pad_y: 0
+      video_codec: prores_ks
+      audio_codec: pcm_s24le
+      extension: .mov
+      extra_args: ["-profile:v", "3"]
