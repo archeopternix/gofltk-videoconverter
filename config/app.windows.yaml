@@ -1,0 +1,23 @@
+tools:
+  ffprobe:
+    path: C:/Program Files/ffmpeg/bin/ffprobe.exe
+
+  virtualdub:
+    executable: C:/Program Files/VirtualDub2/VirtualDub64.exe
+    arguments:
+      - /s{{.JobsFileWindows}}
+      - /x
+    path_mode: windows
+    path_mappings: []
+    env: {}
+
+paths:
+  workflows: workflows
+  avisynth_profiles: avisynth/profiles
+  virtualdub_codecs: virtualdub/codecs
+  deshaker: virtualdub/deshaker.yaml
+
+processing:
+  output_dir: ../output
+  work_dir: ../work
+  keep_temp_files: true

@@ -1,0 +1,14 @@
+id: prores-pcm-mov
+extension: .mov
+
+container_script: |
+  # TODO: Hier die VirtualDub2-Konfiguration für den MOV-Container einfügen.
+
+video_script: |
+  # TODO: Hier den exportierten ProRes-Konfigurationsblock einfügen.
+
+audio_script: |
+  # TODO: Hier den exportierten PCM-Konfigurationsblock einfügen.
+
+save_script: |
+  VirtualDub.SaveAVI("{{.OutputPath}}");

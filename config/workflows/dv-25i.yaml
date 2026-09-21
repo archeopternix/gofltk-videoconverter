@@ -1,0 +1,28 @@
+version: 1
+id: dv-25i
+name: DV 576i25
+priority: 100
+
+match:
+  interlaced: true
+  width: 720
+  height: 576
+  fps: 25
+  fps_tolerance: 0.1
+  codec: [dvvideo]
+
+workflow:
+  - id: prepare
+    filter: avisynth.profile
+    config:
+      profile: dv-25i
+
+  - id: stabilize
+    filter: virtualdub.deshaker
+    config:
+      reuse_analysis: true
+
+  - id: encode
+    filter: virtualdub.encode
+    config:
+      preset: prores-pcm-mov

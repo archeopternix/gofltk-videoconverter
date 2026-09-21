@@ -1,0 +1,9 @@
+plugin_name: Deshaker v3.1
+
+analysis_script: |
+  # TODO: Hier den exportierten Deshaker-Pass-1-Block einfügen.
+  # Verfügbare Platzhalter: {{.InputPath}}, {{.OutputPath}}, {{.LogPath}}
+
+render_script: |
+  # TODO: Hier den exportierten Deshaker-Pass-2-Block einfügen.
+  # Verfügbare Platzhalter: {{.InputPath}}, {{.OutputPath}}, {{.LogPath}}

@@ -1,0 +1,15 @@
+id: x264-8-aac-mp4
+extension: .mp4
+
+container_script: |
+  # TODO: Hier die VirtualDub2-Konfiguration für den MP4-Container einfügen.
+  # Beispiel: VirtualDub.SaveFormat("ffmpeg","mp4");
+
+video_script: |
+  # TODO: Hier den exportierten x264-8-Konfigurationsblock einfügen.
+
+audio_script: |
+  # TODO: Hier den exportierten AAC-Konfigurationsblock einfügen.
+
+save_script: |
+  VirtualDub.SaveAVI("{{.OutputPath}}");

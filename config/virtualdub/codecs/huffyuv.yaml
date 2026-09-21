@@ -1,0 +1,14 @@
+id: huffyuv
+extension: .avi
+
+container_script: |
+  # TODO: Hier die VirtualDub2-Konfiguration für den AVI-Container einfügen.
+
+video_script: |
+  # TODO: Hier den exportierten HuffYUV-Konfigurationsblock einfügen.
+
+audio_script: |
+  # TODO: Hier die gewünschte Audiokonfiguration einfügen.
+
+save_script: |
+  VirtualDub.SaveAVI("{{.OutputPath}}");
