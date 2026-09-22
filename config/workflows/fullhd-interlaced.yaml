@@ -1,0 +1,24 @@
+version: 1
+id: fullhd-interlaced
+name: Full HD interlaced 25/30/50/60p
+priority: 80
+
+match:
+  interlaced: true
+  width: 1920
+  height: 1080
+  fps: [25, 29.97, 30, 50, 59.94, 60]
+  fps_tolerance: 0.06
+
+workflow:
+  - id: prepare
+    filter: avisynth.profile
+    config:
+      profile: fhd-60i
+      preset: Slower
+      resize_x: 1920
+      resize_y: 1080
+
+  - id: stabilize
+    filter: virtualdub.deshaker
+    config: {}

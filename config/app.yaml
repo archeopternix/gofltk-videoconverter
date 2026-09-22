@@ -10,7 +10,7 @@ tools:
   virtualdub:
     executable: wine
     arguments:
-      - /opt/VirtualDub2/VirtualDub64.exe
+      - /home/archeopternix/Virtualdub2/VirtualDub64.exe
       - /s{{.JobsFileWindows}}
       - /x
     path_mode: wine

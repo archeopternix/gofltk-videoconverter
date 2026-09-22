@@ -105,6 +105,7 @@ func (r *Runner) Run(ctx context.Context) (*BatchResult, error) {
 			markRemainingCancelled(result, i, err)
 			return result, err
 		}
+		fmt.Println("processed file:", filename)
 		file, err := r.planFile(ctx, filename, &result.Files[i], catalog, store)
 		if err != nil {
 			r.skip(&result.Files[i], err)

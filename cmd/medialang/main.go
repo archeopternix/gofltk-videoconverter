@@ -11,12 +11,20 @@ import (
 	"github.com/archeopternix/gofltk-videoconverter/medialang/config"
 )
 
+var files []string
+
 func main() {
 	configFile := flag.String("config", "config/app.yaml", "path to the MediaLang app config")
+
+	files = []string{"/home/archeopternix/Videos/IMGA0291.MP4"}
 	flag.Parse()
-	if flag.NArg() == 0 {
-		fmt.Fprintln(os.Stderr, "usage: medialang [-config config/app.yaml] <video> [video...]")
-		os.Exit(2)
+	/*	if flag.NArg() == 0 {
+			fmt.Fprintln(os.Stderr, "usage: medialang [-config config/app.yaml] <video> [video...]")
+			os.Exit(2)
+		}
+	*/
+	if flag.NArg() > 0 {
+		files = flag.Args()
 	}
 
 	app, err := config.Load(*configFile)
@@ -24,7 +32,7 @@ func main() {
 		slog.Error("configuration failed", "error", err)
 		os.Exit(1)
 	}
-	runner := medialang.NewRunner(app, flag.Args())
+	runner := medialang.NewRunner(app, files)
 	result, runErr := runner.Run(context.Background())
 	if result != nil {
 		for _, file := range result.Files {
