@@ -15,7 +15,6 @@ import (
 
 type Runner struct {
 	Tool   config.VirtualDubTool
-	Pather *PathConverter
 	Logger *slog.Logger
 }
 
@@ -77,15 +76,7 @@ func (r Runner) command(ctx context.Context, jobsFile string, logger *slog.Logge
 		}
 		args := []string{"/D", "/C", "call", batchFile, r.Tool.Executable, jobsFile, "/x"}
 		cmd := exec.CommandContext(ctx, commandProcessor, args...)
-		logger.Debug("external command prepared",
-			"stage", "virtualdub",
-			"command_processor", commandProcessor,
-			"batch_file", batchFile,
-			"virtualdub", r.Tool.Executable,
-			"jobs_file", jobsFile,
-			"exit_argument", "/x",
-			"command", cmd.String(),
-		)
+		logger.Debug("external command prepared", "command", cmd.String())
 		return cmd, nil
 
 	case "linux":
@@ -94,12 +85,7 @@ func (r Runner) command(ctx context.Context, jobsFile string, logger *slog.Logge
 			args[i] = strings.ReplaceAll(argument, "{{.JobsFile}}", jobsFile)
 		}
 		cmd := exec.CommandContext(ctx, r.Tool.Executable, args...)
-		logger.Debug("external command prepared",
-			"stage", "virtualdub",
-			"executable", r.Tool.Executable,
-			"jobs_file", jobsFile,
-			"args", args,
-		)
+		logger.Debug("external command prepared", "command", cmd.String())
 		return cmd, nil
 
 	default:

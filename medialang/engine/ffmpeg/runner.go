@@ -49,7 +49,7 @@ func (r Runner) Run(ctx context.Context, input, output string, config filter.ZSc
 	if logger == nil {
 		logger = slog.Default()
 	}
-	logger.Debug("external command prepared", "stage", "scaling", "path", command.Path, "args", command.Args)
+	logger.Debug("external command prepared", "command", command.String())
 	combined, err := command.CombinedOutput()
 	result := Result{Output: strings.TrimSpace(string(combined)), ExitCode: 0}
 	if err != nil {

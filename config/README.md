@@ -20,7 +20,7 @@ tools:
     executable: wine
     arguments:
       - /opt/VirtualDub2/VirtualDub64.exe
-      - /r{{.JobsFile}}
+      - /s{{.JobsFile}}
       - /x
     path_mode: wine
     wine_drive: "Z:"
@@ -31,13 +31,14 @@ tools:
 - `tools.ffprobe.path` is required.
 - `tools.ffmpeg.path` is required by workflows using `ffmpeg.zscale`.
 - `tools.virtualdub.executable` is required by workflows using VirtualDub.
-- `arguments` is optional. Use `{{.JobsFile}}` for the jobs path. On Linux it
-  is converted to a Windows-style path, its configured Wine drive prefix is
-  removed, and the complete argument is wrapped in literal double quotes. On
-  Windows and other operating systems the host path is substituted unchanged.
+- On Windows, `arguments` is ignored because `cmd/medialang/vdub.bat` receives
+  the VirtualDub executable, absolute jobs path, and `/x` directly.
+- On Linux, `arguments` is passed to the configured Wine executable. Use
+  `{{.JobsFile}}` where the absolute host path to `medialang.jobs` is required.
 - `path_mode` is `windows` or `wine`. An empty value defaults to `windows`.
 - `wine_drive` defaults to `Z:`.
-- `path_mappings` can override Wine mappings, for example:
+- `path_mappings` controls paths written inside AviSynth and VirtualDub jobs
+  files and can override Wine mappings, for example:
 
 ```yaml
 path_mappings:

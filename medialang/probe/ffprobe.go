@@ -37,7 +37,7 @@ type ffprobeStream struct {
 	ColorSpace   string `json:"color_space"`
 }
 
-func (p FFProbe) Probe(ctx context.Context, filename string) (media.MediaSpec, error) {
+func (p FFProbe) Probe(ctx context.Context, filename string, logger *slog.Logger) (media.MediaSpec, error) {
 	executable := p.Executable
 	if executable == "" {
 		executable = "ffprobe"
@@ -49,7 +49,10 @@ func (p FFProbe) Probe(ctx context.Context, filename string) (media.MediaSpec, e
 		"-of", "json",
 		filename,
 	)
-	slog.Debug("external command prepared", "stage", "probe", "file", filename, "path", cmd.Path, "args", cmd.Args)
+	if logger == nil {
+		logger = slog.Default()
+	}
+	logger.Debug("external command prepared", "command", cmd.String())
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {

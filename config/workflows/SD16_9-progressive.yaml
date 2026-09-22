@@ -1,0 +1,32 @@
+version: 1
+id: SD16_9-progressive
+name: SD 16:9 progressive to Full HD 30p
+priority: 80
+
+match:
+  interlaced: false
+  width: 848
+  height: 480
+
+workflow:
+  - id: stabilize
+    filter: virtualdub.deshaker
+    config: {}
+
+  - id: final-scale
+    filter: ffmpeg.zscale
+    config:
+      width: 1920
+      height: 1080
+      filter: spline36
+      pixel_format: yuv422p10le
+      video_codec: prores_ks
+      audio_codec: pcm_s24le
+      extension: .mov
+      extra_args:
+        - -r
+        - "30"
+        - -fps_mode
+        - cfr
+        - -profile:v
+        - "3"

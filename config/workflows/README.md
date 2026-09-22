@@ -10,10 +10,18 @@ must be selected. Their order is always AviSynth → VirtualDub → FFmpeg.
 AviSynth alone is not a final writer; FFmpeg can read either a source or a
 generated `.avs` directly.
 
+When a workflow specifies `interlaced: false`, media with an unknown scan type
+is treated as non-interlaced. An unknown scan type does not match
+`interlaced: true`.
+
 VirtualDub encoding is selected implicitly. A Deshaker workflow without a
 later zscale step writes ProRes/PCM MOV. If zscale follows, VirtualDub writes a
 temporary HuffYUV/PCM AVI and FFmpeg creates ProRes HQ (`prores_ks`, profile 3,
 `yuv422p10le`) with `pcm_s24le` audio.
+
+`ffmpeg.zscale.extra_args` adds output arguments immediately before the output
+file. It can enforce a constant output frame rate, for example
+`["-r", "30", "-fps_mode", "cfr"]`.
 
 ```yaml
 workflow:

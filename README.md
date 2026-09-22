@@ -1,41 +1,59 @@
 # MediaLang video converter
 
-MediaLang selects a YAML workflow from `ffprobe` metadata and executes an
-optional `AviSynth → VirtualDub → FFmpeg` pipeline. Every engine block may be
-omitted. All applicable VirtualDub files are collected in one jobs file and
-VirtualDub2 is invoked exactly once per run. FFmpeg executes per file and can
-also consume a source or AviSynth script directly.
+MediaLang reads video metadata with `ffprobe`, selects a YAML workflow, and
+executes the configured AviSynth -> VirtualDub -> FFmpeg stages. AviSynth,
+VirtualDub and FFmpeg are optional per workflow; at least one stage must write
+the final media file.
 
 ## Configuration
 
-- `config/app.yaml` contains the application configuration.
-- Put AviSynth scripts in `config/avisynth/profiles/*.avs.tpl`.
-- Put exported VirtualDub codec blocks in `config/virtualdub/codecs/*.yaml`.
-- Put the two Deshaker blocks in `config/virtualdub/deshaker.yaml`.
-- Detailed configuration is documented in `config/README.md` and the README
-  files in its three subdirectories.
+MediaLang selects its default configuration by operating system:
 
-For Wine, native media paths are converted to `Z:\...` by default. The jobs
-argument uses `{{.JobsFile}}`; on Linux its converted path keeps backslashes
-but omits the Wine drive prefix. Custom mounts can be declared with
-`tools.virtualdub.path_mappings`, for example:
+- Windows: `config/app.windows.yaml`
+- Linux: `config/app.linux.yaml`
 
-```yaml
-path_mappings:
-  - source: /mnt/video
-    target: 'V:\video'
-```
+Other operating systems are rejected. Use `-config <file>` to override the
+default on Windows or Linux. Detailed settings are described in
+`config/README.md` and the README files below the configuration directories.
 
-## Run
+On Windows, VirtualDub is launched through `cmd/medialang/vdub.bat`. On Linux,
+the configured Wine executable and arguments are used directly.
+
+## Usage
 
 ```text
-go run ./cmd/medialang -config config/app.yaml video1.m2t video2.avi
+medialang [options] <file-or-pattern> [<file-or-pattern> ...]
 ```
 
-Final archive outputs use `<basename>_processed.mov`. The supplied workflows
-store ProRes HQ video with PCM audio. Files without a matching workflow, or
-files that fail during preparation or FFmpeg, are skipped while later files
-continue. VirtualDub always runs analysis and then Deshake, without retry.
-Without subsequent scaling it writes ProRes/PCM directly; with subsequent
-scaling it writes a temporary HuffYUV/PCM AVI which FFmpeg deletes after
-success.
+Inputs may be one file, multiple files, or quoted file patterns:
+
+```text
+go run ./cmd/medialang video.mov
+go run ./cmd/medialang video1.mov video2.mp4
+go run ./cmd/medialang "*.mov"
+go run ./cmd/medialang "C:\Videos\*.mp4" "D:\Archive\*.m2t"
+```
+
+Use `-?`, `-h`, or `-help` to display usage. A malformed pattern or a pattern
+with no matches is reported before processing begins.
+
+## Processing
+
+Workflow definitions are loaded from `config/workflows`. Generated AviSynth
+scripts, Deshaker logs, `medialang.jobs`, and intermediate media are stored in
+`<work_dir>/<run-id>/`. When `keep_temp_files` is false, this directory is
+removed only after a successful run; failed, skipped, or cancelled runs retain
+it for diagnostics.
+
+VirtualDub processes all applicable files in one jobs file. Without subsequent
+scaling it writes the final ProRes/PCM MOV directly. When an FFmpeg scale stage
+follows, VirtualDub writes a temporary HuffYUV/PCM AVI and FFmpeg creates the
+final output.
+
+## Logging
+
+Logs use structured `slog` output with `stage` followed by `run_id`. Supported
+stages are `started`, `preparation`, `probe`, `interlace`, `deshake`, `scale`,
+`file written`, and `finished`. Intermediate progress is logged at `DEBUG`, the
+final summary at `INFO`, and failures at `ERROR`. Optional stages that are not
+part of a selected workflow do not produce log messages.
