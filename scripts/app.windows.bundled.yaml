@@ -1,19 +1,19 @@
 tools:
   ffprobe:
-    path: C:/Program Files/ffmpeg/bin/ffprobe.exe
+    path: ../tools/ffmpeg/bin/ffprobe.exe
 
   ffmpeg:
-    path: C:/Program Files/ffmpeg/bin/ffmpeg.exe
+    path: ../tools/ffmpeg/bin/ffmpeg.exe
 
   virtualdub:
-    executable: C:/Program Files/VirtualDub2/vdub64.exe
+    executable: ../tools/VirtualDub2/vdub64.exe
     path_mode: windows
     path_mappings: []
     env: {}
 
 paths:
   workflows: workflows
-  avisynth: C:/Program Files/AviSynth+/plugins64+
+  avisynth: ../tools/AviSynth+/plugins64+
 
 processing:
   output_dir: ../output

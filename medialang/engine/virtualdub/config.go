@@ -2,9 +2,9 @@ package virtualdub
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
+	embedded "github.com/archeopternix/gofltk-videoconverter/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,14 +23,11 @@ type DeshakerTemplate struct {
 	RenderScript   string `yaml:"render_script"`
 }
 
-type ConfigStore struct {
-	CodecsDir    string
-	DeshakerFile string
-}
+type ConfigStore struct{}
 
 func (s ConfigStore) LoadCodec(id string) (*CodecPreset, error) {
-	filename := filepath.Join(s.CodecsDir, filepath.Base(id)+".yaml")
-	data, err := os.ReadFile(filename)
+	filename := "virtualdub/codecs/" + filepath.Base(id) + ".yaml"
+	data, err := embedded.Files.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("read VirtualDub codec %q: %w", id, err)
 	}
@@ -51,7 +48,7 @@ func (s ConfigStore) LoadCodec(id string) (*CodecPreset, error) {
 }
 
 func (s ConfigStore) LoadDeshaker() (*DeshakerTemplate, error) {
-	data, err := os.ReadFile(s.DeshakerFile)
+	data, err := embedded.Files.ReadFile("virtualdub/deshaker.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("read Deshaker config: %w", err)
 	}

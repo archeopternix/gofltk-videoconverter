@@ -21,7 +21,12 @@ func main() {
 	})))
 	runID := time.Now().Format("20060102T150405.000")
 
-	defaultConfigFile, err := configFileForOS(runtime.GOOS)
+	applicationDir, err := executableDirectory()
+	if err != nil {
+		slog.Error("configuration failed", "stage", "preparation", "run_id", runID, "error", err)
+		os.Exit(1)
+	}
+	defaultConfigFile, err := configFileForOS(runtime.GOOS, applicationDir)
 	if err != nil {
 		slog.Error("configuration failed", "stage", "preparation", "run_id", runID, "error", err)
 		os.Exit(1)
@@ -51,6 +56,10 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
+	configPath := *configFile
+	if !filepath.IsAbs(configPath) {
+		configPath = filepath.Join(applicationDir, configPath)
+	}
 
 	files, err := expandInputs(flag.Args())
 	if err != nil {
@@ -58,12 +67,12 @@ func main() {
 		os.Exit(2)
 	}
 
-	app, err := config.Load(*configFile)
+	app, err := config.Load(configPath)
 	if err != nil {
 		slog.Error("configuration failed", "stage", "preparation", "run_id", runID, "error", err)
 		os.Exit(1)
 	}
-	runner := medialang.NewRunner(app, files, runID)
+	runner := medialang.NewRunner(app, files, runID, applicationDir)
 	result, runErr := runner.Run(context.Background())
 	if result != nil {
 		for _, file := range result.Files {
@@ -102,13 +111,28 @@ func expandInputs(inputs []string) ([]string, error) {
 	return files, nil
 }
 
-func configFileForOS(goos string) (string, error) {
+func configFileForOS(goos, applicationDir string) (string, error) {
 	switch goos {
 	case "windows":
-		return "config/app.windows.yaml", nil
+		return filepath.Join(applicationDir, "config", "app.windows.yaml"), nil
 	case "linux":
-		return "config/app.linux.yaml", nil
+		return filepath.Join(applicationDir, "config", "app.linux.yaml"), nil
 	default:
 		return "", fmt.Errorf("unsupported operating system %q; only windows and linux are supported", goos)
 	}
+}
+
+func executableDirectory() (string, error) {
+	executable, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("locate executable: %w", err)
+	}
+	if resolved, resolveErr := filepath.EvalSymlinks(executable); resolveErr == nil {
+		executable = resolved
+	}
+	absolute, err := filepath.Abs(executable)
+	if err != nil {
+		return "", fmt.Errorf("resolve executable path: %w", err)
+	}
+	return filepath.Dir(absolute), nil
 }

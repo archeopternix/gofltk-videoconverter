@@ -4,6 +4,9 @@ Profiles are named Go `text/template` definitions below `profiles/` with the
 suffix `.avs.tpl`. Each file must define `{{define "Avisynth"}}`; unknown
 template variables are errors.
 
+Profiles are embedded in the executable at build time. They do not need to be
+distributed separately, and profile changes require rebuilding the binary.
+
 Built-in values are `AvisynthPath`, `InFile`, `Deinterlace`, `ConvertYV`,
 `Preset`, `ResizeX`, `ResizeY`, `Width`, `Height`, `FPS`, `FieldOrder`,
 `PixelFormat`, `ColorSpace` and `ColorFamily`. Additional typed values may be

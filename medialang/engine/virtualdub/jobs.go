@@ -8,6 +8,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	embedded "github.com/archeopternix/gofltk-videoconverter/config"
 )
 
 type Job struct {
@@ -20,8 +22,7 @@ type Job struct {
 }
 
 type JobsBuilder struct {
-	Pather      *PathConverter
-	TemplateDir string
+	Pather *PathConverter
 }
 
 type headerData struct {
@@ -44,10 +45,11 @@ type jobData struct {
 }
 
 func (b JobsBuilder) Write(filename string, jobs []Job) (int, error) {
-	tpl, err := template.New("virtualdub").Option("missingkey=error").ParseFiles(
-		filepath.Join(b.TemplateDir, "header.tpl"),
-		filepath.Join(b.TemplateDir, "analysis.tpl"),
-		filepath.Join(b.TemplateDir, "render.tpl"),
+	tpl, err := template.New("virtualdub").Option("missingkey=error").ParseFS(
+		embedded.Files,
+		"virtualdub/header.tpl",
+		"virtualdub/analysis.tpl",
+		"virtualdub/render.tpl",
 	)
 	if err != nil {
 		return 0, fmt.Errorf("parse VirtualDub templates: %w", err)

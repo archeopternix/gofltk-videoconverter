@@ -44,11 +44,8 @@ type WindowsPathMap struct {
 }
 
 type Paths struct {
-	Workflows        string `yaml:"workflows"`
-	AviSynthProfiles string `yaml:"avisynth_profiles"`
-	AviSynth         string `yaml:"avisynth"`
-	VirtualDubCodecs string `yaml:"virtualdub_codecs"`
-	Deshaker         string `yaml:"deshaker"`
+	Workflows string `yaml:"workflows"`
+	AviSynth  string `yaml:"avisynth"`
 }
 
 type Processing struct {
@@ -80,16 +77,23 @@ func Load(filename string) (*App, error) {
 }
 
 func (a *App) resolvePaths(base string) {
+	a.Tools.FFprobe.Path = resolveCommand(base, a.Tools.FFprobe.Path)
+	a.Tools.FFmpeg.Path = resolveCommand(base, a.Tools.FFmpeg.Path)
+	a.Tools.VirtualDub.Executable = resolveCommand(base, a.Tools.VirtualDub.Executable)
 	a.Paths.Workflows = resolve(base, a.Paths.Workflows)
-	a.Paths.AviSynthProfiles = resolve(base, a.Paths.AviSynthProfiles)
 	a.Paths.AviSynth = resolve(base, a.Paths.AviSynth)
-	a.Paths.VirtualDubCodecs = resolve(base, a.Paths.VirtualDubCodecs)
-	a.Paths.Deshaker = resolve(base, a.Paths.Deshaker)
 	a.Processing.OutputDir = resolve(base, a.Processing.OutputDir)
 	a.Processing.WorkDir = resolve(base, a.Processing.WorkDir)
 	for i := range a.Tools.VirtualDub.Mappings {
 		a.Tools.VirtualDub.Mappings[i].Source = resolve(base, a.Tools.VirtualDub.Mappings[i].Source)
 	}
+}
+
+func resolveCommand(base, command string) string {
+	if command == "" || (!strings.ContainsAny(command, `/\`) && !filepath.IsAbs(command)) {
+		return command
+	}
+	return resolve(base, command)
 }
 
 func resolve(base, path string) string {

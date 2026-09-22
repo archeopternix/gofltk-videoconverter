@@ -20,10 +20,7 @@ tools:
 
 paths:
   workflows: workflows
-  avisynth_profiles: avisynth/profiles
   avisynth: /opt/avisynth/plugins64+
-  virtualdub_codecs: virtualdub/codecs
-  deshaker: virtualdub/deshaker.yaml
 
 processing:
   output_dir: ../output

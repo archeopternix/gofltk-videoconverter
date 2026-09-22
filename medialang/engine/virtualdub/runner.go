@@ -14,8 +14,9 @@ import (
 )
 
 type Runner struct {
-	Tool   config.VirtualDubTool
-	Logger *slog.Logger
+	Tool      config.VirtualDubTool
+	BatchFile string
+	Logger    *slog.Logger
 }
 
 type Result struct {
@@ -58,7 +59,10 @@ func (r Runner) Run(ctx context.Context, jobsFile string) (Result, error) {
 func (r Runner) command(ctx context.Context, jobsFile string, logger *slog.Logger) (*exec.Cmd, error) {
 	switch runtime.GOOS {
 	case "windows":
-		batchFile, err := filepath.Abs(filepath.Join("cmd", "medialang", "vdub.bat"))
+		if strings.TrimSpace(r.BatchFile) == "" {
+			return nil, fmt.Errorf("VirtualDub batch file is not configured")
+		}
+		batchFile, err := filepath.Abs(r.BatchFile)
 		if err != nil {
 			return nil, fmt.Errorf("resolve VirtualDub batch path: %w", err)
 		}

@@ -2,3 +2,4 @@ gofltk-videoconverter
 *.exe
 work/
 output/
+dist/

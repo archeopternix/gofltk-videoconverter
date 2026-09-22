@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	embedded "github.com/archeopternix/gofltk-videoconverter/config"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/filter"
 	"github.com/archeopternix/gofltk-videoconverter/medialang/media"
 )
@@ -15,14 +16,13 @@ type WindowsPather interface {
 }
 
 type Compiler struct {
-	ProfilesDir  string
 	AviSynthPath string
 	Pather       WindowsPather
 }
 
 func (c Compiler) Compile(input media.Artifact, profile *filter.AviSynthProfile, outputPath string) (media.Artifact, error) {
-	filename := filepath.Join(c.ProfilesDir, profile.Config.Profile+".avs.tpl")
-	tpl, err := template.New(filepath.Base(filename)).Option("missingkey=error").ParseFiles(filename)
+	filename := "avisynth/profiles/" + filepath.Base(profile.Config.Profile) + ".avs.tpl"
+	tpl, err := template.New("Avisynth").Option("missingkey=error").ParseFS(embedded.Files, filename)
 	if err != nil {
 		return media.Artifact{}, fmt.Errorf("parse AviSynth profile %q: %w", profile.Config.Profile, err)
 	}

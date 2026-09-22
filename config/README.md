@@ -4,6 +4,12 @@ The application configuration has the sections `tools`, `paths` and
 `processing`. Relative paths are resolved against the directory containing the
 selected app YAML file.
 
+The default app YAML is located relative to the executable. A relative
+`-config` argument is also interpreted relative to the executable, not the
+current working directory. Tool values containing a slash are treated as paths
+and resolved against the app YAML directory; bare commands such as `ffprobe`
+or `wine` continue to use `PATH`.
+
 By default, MediaLang loads `config/app.windows.yaml` on Windows and
 `config/app.linux.yaml` on Linux. Other operating systems are rejected. The
 `-config` flag can select a different configuration file on a supported system.
@@ -31,7 +37,7 @@ tools:
 - `tools.ffprobe.path` is required.
 - `tools.ffmpeg.path` is required by workflows using `ffmpeg.zscale`.
 - `tools.virtualdub.executable` is required by workflows using VirtualDub.
-- On Windows, `arguments` is ignored because `cmd/medialang/vdub.bat` receives
+- On Windows, `arguments` is ignored because `vdub.bat` beside the executable receives
   the VirtualDub executable, absolute jobs path, and `/x` directly.
 - On Linux, `arguments` is passed to the configured Wine executable. Use
   `{{.JobsFile}}` where the absolute host path to `medialang.jobs` is required.
@@ -53,14 +59,13 @@ path_mappings:
 ```yaml
 paths:
   workflows: workflows
-  avisynth_profiles: avisynth/profiles
   avisynth: /opt/avisynth/plugins64+
-  virtualdub_codecs: virtualdub/codecs
-  deshaker: virtualdub/deshaker.yaml
 ```
 
-`workflows` is required. The remaining paths are required when their
-corresponding filters or template variables are used.
+`workflows` is required and remains external so workflows can be edited without
+rebuilding. `avisynth` is the plugin directory written into generated scripts.
+AviSynth profiles, VirtualDub jobs templates, Deshaker settings, and codec
+presets are embedded in the executable and therefore have no app YAML paths.
 
 ## Processing
 

@@ -13,11 +13,13 @@ MediaLang selects its default configuration by operating system:
 - Linux: `config/app.linux.yaml`
 
 Other operating systems are rejected. Use `-config <file>` to override the
-default on Windows or Linux. Detailed settings are described in
+default on Windows or Linux. The default and any relative `-config` path are
+resolved from the directory containing the executable, so the program does not
+depend on its current working directory. Detailed settings are described in
 `config/README.md` and the README files below the configuration directories.
 
-On Windows, VirtualDub is launched through `cmd/medialang/vdub.bat`. On Linux,
-the configured Wine executable and arguments are used directly.
+On Windows, VirtualDub is launched through `vdub.bat` beside the executable.
+On Linux, the configured Wine executable and arguments are used directly.
 
 ## Usage
 
@@ -28,10 +30,10 @@ medialang [options] <file-or-pattern> [<file-or-pattern> ...]
 Inputs may be one file, multiple files, or quoted file patterns:
 
 ```text
-go run ./cmd/medialang video.mov
-go run ./cmd/medialang video1.mov video2.mp4
-go run ./cmd/medialang "*.mov"
-go run ./cmd/medialang "C:\Videos\*.mp4" "D:\Archive\*.m2t"
+videoconverter.exe video.mov
+videoconverter.exe video1.mov video2.mp4
+videoconverter.exe "*.mov"
+videoconverter.exe "C:\Videos\*.mp4" "D:\Archive\*.m2t"
 ```
 
 Use `-?`, `-h`, or `-help` to display usage. A malformed pattern or a pattern
@@ -57,3 +59,36 @@ stages are `started`, `preparation`, `probe`, `interlace`, `deshake`, `scale`,
 `file written`, and `finished`. Intermediate progress is logged at `DEBUG`, the
 final summary at `INFO`, and failures at `ERROR`. Optional stages that are not
 part of a selected workflow do not produce log messages.
+
+## Windows distribution
+
+Run the PowerShell build script from any directory:
+
+```powershell
+./scripts/build-windows.ps1
+```
+
+This creates `dist/videoconverter.zip`. The archive contains the Windows AMD64
+binary, `vdub.bat`, `config/app.windows.yaml`, and the external workflow YAML
+files. It does not include external tools; edit `config/app.windows.yaml` after
+unpacking to point to FFmpeg, VirtualDub2, and AviSynth on the target PC.
+
+To create a bundle with tools, supply a directory with this layout:
+
+```text
+portable-tools/
+  ffmpeg/bin/ffmpeg.exe
+  ffmpeg/bin/ffprobe.exe
+  VirtualDub2/vdub64.exe
+  AviSynth+/plugins64+/
+```
+
+```powershell
+./scripts/build-windows.ps1 -ToolsDirectory C:\portable-tools
+```
+
+The complete tools directory is copied to `tools/` in the archive and the
+packaged app configuration uses relative paths to it. The source
+`config/app.windows.yaml` is never changed. AviSynth and VirtualDub templates,
+Deshaker settings, and VirtualDub codec presets are embedded in the executable;
+changing those source files requires rebuilding the binary.

@@ -54,12 +54,13 @@ type BatchResult struct {
 }
 
 type Runner struct {
-	Config   *config.App
-	Files    []string
-	Probe    probe.Probe
-	Registry *filter.Registry
-	Logger   *slog.Logger
-	RunID    string
+	Config         *config.App
+	Files          []string
+	Probe          probe.Probe
+	Registry       *filter.Registry
+	Logger         *slog.Logger
+	RunID          string
+	ApplicationDir string
 }
 
 type plannedFile struct {
@@ -77,14 +78,15 @@ type plannedFile struct {
 	result           *FileResult
 }
 
-func NewRunner(app *config.App, files []string, runID string) *Runner {
+func NewRunner(app *config.App, files []string, runID, applicationDir string) *Runner {
 	return &Runner{
-		Config:   app,
-		Files:    append([]string(nil), files...),
-		Probe:    probe.FFProbe{Executable: app.Tools.FFprobe.Path},
-		Registry: filter.DefaultRegistry(),
-		Logger:   slog.Default(),
-		RunID:    runID,
+		Config:         app,
+		Files:          append([]string(nil), files...),
+		Probe:          probe.FFProbe{Executable: app.Tools.FFprobe.Path},
+		Registry:       filter.DefaultRegistry(),
+		Logger:         slog.Default(),
+		RunID:          runID,
+		ApplicationDir: applicationDir,
 	}
 }
 
@@ -133,7 +135,7 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 	if err != nil {
 		return result, err
 	}
-	store := virtualdub.ConfigStore{CodecsDir: r.Config.Paths.VirtualDubCodecs, DeshakerFile: r.Config.Paths.Deshaker}
+	store := virtualdub.ConfigStore{}
 	pather := virtualdub.NewPathConverter(r.Config.Tools.VirtualDub)
 	if err := os.MkdirAll(workDir, 0o755); err != nil {
 		return result, fmt.Errorf("create run directory %q: %w", workDir, err)
@@ -164,7 +166,7 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 		planned = append(planned, file)
 	}
 
-	avsCompiler := avisynth.Compiler{ProfilesDir: r.Config.Paths.AviSynthProfiles, AviSynthPath: r.Config.Paths.AviSynth, Pather: pather}
+	avsCompiler := avisynth.Compiler{AviSynthPath: r.Config.Paths.AviSynth, Pather: pather}
 	prepared := make([]*plannedFile, 0, len(planned))
 	for _, file := range planned {
 		if err := ctx.Err(); err != nil {
@@ -211,7 +213,7 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 	if len(jobs) > 0 {
 		jobsFile := filepath.Join(workDir, "medialang.jobs")
 		result.JobsFile = jobsFile
-		builder := virtualdub.JobsBuilder{Pather: pather, TemplateDir: filepath.Dir(r.Config.Paths.Deshaker)}
+		builder := virtualdub.JobsBuilder{Pather: pather}
 		jobCount, err := builder.Write(jobsFile, jobs)
 		if err != nil {
 			stageErr := atStage(stagePreparation, err)
@@ -222,7 +224,11 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 		} else {
 			stageLogger(baseLogger, stagePreparation, runID).Debug("VirtualDub jobs file written", "path", jobsFile, "jobs", jobCount, "files", len(virtualDubFiles))
 			deshakeLogger := stageLogger(baseLogger, stageDeshake, runID)
-			vdubRunner := virtualdub.Runner{Tool: r.Config.Tools.VirtualDub, Logger: deshakeLogger}
+			vdubRunner := virtualdub.Runner{
+				Tool:      r.Config.Tools.VirtualDub,
+				BatchFile: filepath.Join(r.ApplicationDir, "vdub.bat"),
+				Logger:    deshakeLogger,
+			}
 			deshakeLogger.Debug("VirtualDub started",
 				"executable", r.Config.Tools.VirtualDub.Executable,
 				"jobs_file", jobsFile,
@@ -376,16 +382,13 @@ func (r *Runner) planFile(ctx context.Context, filename string, result *FileResu
 			if file.profile != nil {
 				return nil, atStage(stagePreparation, fmt.Errorf("workflow %q contains multiple AviSynth profiles", definition.ID))
 			}
-			if r.Config.Paths.AviSynthProfiles == "" {
-				return nil, atStage(stagePreparation, fmt.Errorf("workflow %q uses avisynth.profile but paths.avisynth_profiles is empty", definition.ID))
-			}
 			file.profile = typed
 		case *filter.Deshaker:
 			if file.deshaker != nil {
 				return nil, atStage(stagePreparation, fmt.Errorf("workflow %q contains multiple Deshaker filters", definition.ID))
 			}
-			if r.Config.Tools.VirtualDub.Executable == "" || r.Config.Paths.Deshaker == "" || r.Config.Paths.VirtualDubCodecs == "" {
-				return nil, atStage(stagePreparation, fmt.Errorf("workflow %q uses virtualdub.deshaker but its tool or config paths are empty", definition.ID))
+			if r.Config.Tools.VirtualDub.Executable == "" {
+				return nil, atStage(stagePreparation, fmt.Errorf("workflow %q uses virtualdub.deshaker but tools.virtualdub.executable is empty", definition.ID))
 			}
 			file.deshaker = typed
 		case *filter.ZScale:
