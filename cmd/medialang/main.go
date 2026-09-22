@@ -14,6 +14,10 @@ import (
 var files []string
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
+
 	configFile := flag.String("config", "config/app.yaml", "path to the MediaLang app config")
 
 	files = []string{"/home/archeopternix/Videos/IMGA0291.MP4"}

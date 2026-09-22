@@ -16,7 +16,7 @@ tools:
     executable: wine
     arguments:
       - /opt/VirtualDub2/VirtualDub64.exe
-      - /s{{.JobsFileWindows}}
+      - /r{{.JobsFile}}
       - /x
     path_mode: wine
     wine_drive: "Z:"
@@ -27,8 +27,10 @@ tools:
 - `tools.ffprobe.path` is required.
 - `tools.ffmpeg.path` is required by workflows using `ffmpeg.zscale`.
 - `tools.virtualdub.executable` is required by workflows using VirtualDub.
-- `arguments` is optional. Use `{{.JobsFileWindows}}` for the converted jobs
-  path or `{{.JobsFile}}` for its host path.
+- `arguments` is optional. Use `{{.JobsFile}}` for the jobs path. On Linux it
+  is converted to a Windows-style path, its configured Wine drive prefix is
+  removed, and the complete argument is wrapped in literal double quotes. On
+  Windows and other operating systems the host path is substituted unchanged.
 - `path_mode` is `windows` or `wine`. An empty value defaults to `windows`.
 - `wine_drive` defaults to `Z:`.
 - `path_mappings` can override Wine mappings, for example:

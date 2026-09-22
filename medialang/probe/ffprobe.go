@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -48,6 +49,7 @@ func (p FFProbe) Probe(ctx context.Context, filename string) (media.MediaSpec, e
 		"-of", "json",
 		filename,
 	)
+	slog.Debug("executing external tool", "path", cmd.Path, "args", cmd.Args)
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {

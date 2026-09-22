@@ -5,13 +5,13 @@ tools:
   ffmpeg:
     path: ffmpeg
 
-  # Linux: VirtualDub2 is launched through Wine. The jobs file and all media
-  # paths are converted to Windows paths before VirtualDub sees them.
+  # Linux: VirtualDub2 is launched through Wine. Media paths use Wine drives;
+  # the jobs argument keeps Windows separators but omits its Wine drive.
   virtualdub:
     executable: wine
     arguments:
-      - /home/archeopternix/Virtualdub2/VirtualDub64.exe
-      - /s{{.JobsFileWindows}}
+      - /home/archeopternix/Virtualdub2/vdub64.exe
+      - /r{{.JobsFile}}
       - /x
     path_mode: wine
     wine_drive: "Z:"

@@ -3,6 +3,7 @@ package ffmpeg
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -38,6 +39,7 @@ func (r Runner) Run(ctx context.Context, input, output string, config filter.ZSc
 		return fmt.Errorf("config key tools.ffmpeg.path is required for ffmpeg.zscale")
 	}
 	command := exec.CommandContext(ctx, executable, args...)
+	slog.Debug("executing external tool", "path", command.Path, "args", command.Args)
 	combined, err := command.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("ffmpeg failed: %w: %s", err, strings.TrimSpace(string(combined)))

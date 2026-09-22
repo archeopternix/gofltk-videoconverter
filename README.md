@@ -8,16 +8,17 @@ also consume a source or AviSynth script directly.
 
 ## Configuration
 
-- `config/app.yaml` is the Wine/Linux example.
-- `config/app.windows.yaml` is the native Windows example.
+- `config/app.yaml` contains the application configuration.
 - Put AviSynth scripts in `config/avisynth/profiles/*.avs.tpl`.
 - Put exported VirtualDub codec blocks in `config/virtualdub/codecs/*.yaml`.
 - Put the two Deshaker blocks in `config/virtualdub/deshaker.yaml`.
 - Detailed configuration is documented in `config/README.md` and the README
   files in its three subdirectories.
 
-For Wine, native paths are converted to `Z:\...` by default. Custom mounts can
-be declared with `tools.virtualdub.path_mappings`, for example:
+For Wine, native media paths are converted to `Z:\...` by default. The jobs
+argument uses `{{.JobsFile}}`; on Linux its converted path keeps backslashes
+but omits the Wine drive prefix. Custom mounts can be declared with
+`tools.virtualdub.path_mappings`, for example:
 
 ```yaml
 path_mappings:
