@@ -28,4 +28,4 @@ paths:
 processing:
   output_dir: ../output
   work_dir: ../work
-  keep_temp_files: false
+  keep_temp_files: true
