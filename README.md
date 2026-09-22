@@ -1,6 +1,15 @@
 # MediaLang video converter
 
-MediaLang reads video metadata with `ffprobe`, selects a YAML workflow, and
+MediaLang processes video files and enhances them to be used in a NLE (best DaVinci Resolve).
+
+Based on the source file parameters the best matching workflow will be selected and depending on the configured settings the video will be:
+
+- De-Interlaced
+- De-shaked
+- Scaled
+- Saved in ProRes format
+
+It reads video metadata with `ffprobe`, selects a YAML workflow, and
 executes the configured AviSynth -> VirtualDub -> FFmpeg stages. AviSynth,
 VirtualDub and FFmpeg are optional per workflow; at least one stage must write
 the final media file.
