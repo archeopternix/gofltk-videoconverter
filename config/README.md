@@ -4,6 +4,10 @@ The application configuration has the sections `tools`, `paths` and
 `processing`. Relative paths are resolved against the directory containing the
 selected app YAML file.
 
+By default, MediaLang loads `config/app.windows.yaml` on Windows and
+`config/app.linux.yaml` on Linux. Other operating systems are rejected. The
+`-config` flag can select a different configuration file on a supported system.
+
 ## Tools
 
 ```yaml
@@ -69,6 +73,7 @@ processing:
 `output_dir` contains final user files. Scripts, per-file Deshaker logs, the
 jobs file and intermediate videos are written directly below
 `<work_dir>/<run-id>/`.
-When `keep_temp_files` is false, that run directory is removed after success,
-failure or cancellation. A successful FFmpeg step deletes its HuffYUV
-intermediate immediately, including when `keep_temp_files` is true.
+When `keep_temp_files` is false, that run directory is removed only after a
+successful run. Failed, skipped or cancelled runs retain their files for
+diagnostics. A successful FFmpeg step deletes its HuffYUV intermediate
+immediately, including when `keep_temp_files` is true.

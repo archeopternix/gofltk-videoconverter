@@ -87,7 +87,7 @@ func (c *Catalog) Match(spec media.MediaSpec) (*Definition, error) {
 
 func matches(match MatchDefinition, spec media.MediaSpec) bool {
 	if match.Interlaced != nil {
-		if spec.ScanType == media.ScanUnknown || (*match.Interlaced != (spec.ScanType == media.ScanInterlaced)) {
+		if *match.Interlaced != (spec.ScanType == media.ScanInterlaced) {
 			return false
 		}
 	}

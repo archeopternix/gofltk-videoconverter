@@ -49,7 +49,7 @@ func (p FFProbe) Probe(ctx context.Context, filename string) (media.MediaSpec, e
 		"-of", "json",
 		filename,
 	)
-	slog.Debug("executing external tool", "path", cmd.Path, "args", cmd.Args)
+	slog.Debug("external command prepared", "stage", "probe", "file", filename, "path", cmd.Path, "args", cmd.Args)
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {

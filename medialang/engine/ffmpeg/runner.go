@@ -13,9 +13,15 @@ import (
 
 type Runner struct {
 	Executable string
+	Logger     *slog.Logger
 }
 
-func (r Runner) Run(ctx context.Context, input, output string, config filter.ZScaleConfig) error {
+type Result struct {
+	Output   string
+	ExitCode int
+}
+
+func (r Runner) Run(ctx context.Context, input, output string, config filter.ZScaleConfig) (Result, error) {
 	filterChain := fmt.Sprintf("zscale=w=%d:h=%d:filter=%s,format=%s", config.Width, config.Height, config.Filter, config.PixelFormat)
 	if config.PadWidth > 0 && config.PadHeight > 0 {
 		filterChain += fmt.Sprintf(",pad=%d:%d:%d:%d:black,setsar=1", config.PadWidth, config.PadHeight, config.PadX, config.PadY)
@@ -36,13 +42,22 @@ func (r Runner) Run(ctx context.Context, input, output string, config filter.ZSc
 
 	executable := strings.TrimSpace(r.Executable)
 	if executable == "" {
-		return fmt.Errorf("config key tools.ffmpeg.path is required for ffmpeg.zscale")
+		return Result{ExitCode: -1}, fmt.Errorf("config key tools.ffmpeg.path is required for ffmpeg.zscale")
 	}
 	command := exec.CommandContext(ctx, executable, args...)
-	slog.Debug("executing external tool", "path", command.Path, "args", command.Args)
-	combined, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("ffmpeg failed: %w: %s", err, strings.TrimSpace(string(combined)))
+	logger := r.Logger
+	if logger == nil {
+		logger = slog.Default()
 	}
-	return nil
+	logger.Debug("external command prepared", "stage", "scaling", "path", command.Path, "args", command.Args)
+	combined, err := command.CombinedOutput()
+	result := Result{Output: strings.TrimSpace(string(combined)), ExitCode: 0}
+	if err != nil {
+		result.ExitCode = -1
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			result.ExitCode = exitErr.ExitCode()
+		}
+		return result, fmt.Errorf("execute FFmpeg: %w", err)
+	}
+	return result, nil
 }

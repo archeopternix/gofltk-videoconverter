@@ -7,7 +7,7 @@ match:
   interlaced: false
   width: 3840
   height: 2160
-  fps: [25, 29.97, 30, 50, 59.94, 60]
+  fps: [25, 29.97, 29.975, 30, 50, 59.94, 60]
   fps_tolerance: 0.06
 
 workflow:

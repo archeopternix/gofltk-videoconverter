@@ -11,7 +11,7 @@ tools:
     executable: wine
     arguments:
       - /home/archeopternix/Virtualdub2/vdub64.exe
-      - /r{{.JobsFile}}
+      - /s{{.JobsFile}}
       - /x
     path_mode: wine
     wine_drive: "Z:"
