@@ -55,6 +55,7 @@ func LoadCatalog(directory string) (*Catalog, error) {
 }
 
 func (c *Catalog) Match(spec media.MediaSpec) (*Definition, error) {
+	spec = spec.WithScanFallback()
 	type candidate struct {
 		definition  *Definition
 		specificity int

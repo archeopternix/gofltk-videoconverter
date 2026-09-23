@@ -8,7 +8,7 @@ match:
   width: 640
   height: 480
   fps: [29.97, 30, 59.94, 60]
-  fps_tolerance: 0.06
+  fps_tolerance: 0.07
 
 workflow:
   - id: stabilize

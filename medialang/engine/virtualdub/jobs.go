@@ -25,6 +25,13 @@ type JobsBuilder struct {
 	Pather *PathConverter
 }
 
+// Validate checks file-specific paths and fragments before adding a file to the
+// shared batch, so an invalid file does not prevent other files from running.
+func (b JobsBuilder) Validate(job Job) error {
+	_, err := b.resolve(job)
+	return err
+}
+
 type headerData struct {
 	Date     string
 	Jobcount int

@@ -10,9 +10,10 @@ must be selected. Their order is always AviSynth → VirtualDub → FFmpeg.
 AviSynth alone is not a final writer; FFmpeg can read either a source or a
 generated `.avs` directly.
 
-When a workflow specifies `interlaced: false`, media with an unknown scan type
-is treated as non-interlaced. An unknown scan type does not match
-`interlaced: true`.
+Missing, unknown, or unrecognized scan/field-order metadata is treated as
+progressive for matching and processing, with field order left unknown.
+Only a known interlaced scan with TFF or BFF field order matches
+`interlaced: true` and enables deinterlacing.
 
 VirtualDub encoding is selected implicitly. A Deshaker workflow without a
 later zscale step writes ProRes/PCM MOV. If zscale follows, VirtualDub writes a

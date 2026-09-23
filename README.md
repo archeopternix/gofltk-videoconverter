@@ -61,6 +61,18 @@ scaling it writes the final ProRes/PCM MOV directly. When an FFmpeg scale stage
 follows, VirtualDub writes a temporary HuffYUV/PCM AVI and FFmpeg creates the
 final output.
 
+Missing, unknown, or unrecognized scan/field-order metadata is treated as
+progressive. Deinterlacing requires a known interlaced scan and field order.
+
+A file error skips that file's remaining workflow stages; other files continue.
+VirtualDub analysis and render remain in the shared external batch. After it
+finishes, every participating output is checked before any FFmpeg stage starts.
+Outputs must be nonempty regular files, newly created or updated, with video
+metadata readable by ffprobe. Invalid outputs are skipped individually, even
+when VirtualDub reports a batch error; verified outputs can still proceed.
+Per-file errors are collected and reported after processing, and the command
+exits with status 1 if the run had errors.
+
 ## Logging
 
 Logs use structured `slog` output with `stage` followed by `run_id`. Supported

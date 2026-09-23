@@ -2,6 +2,7 @@ package medialang
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -72,6 +73,7 @@ type plannedFile struct {
 	codec            *virtualdub.CodecPreset
 	ffmpegScale      *filter.ZScale
 	virtualDubOutput string
+	previousOutput   os.FileInfo
 	finalOutput      string
 	current          media.Artifact
 	readyForFFmpeg   bool
@@ -109,6 +111,14 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 	workDirPreserved := false
 	stageLogger(baseLogger, stageStarted, runID).Debug("run started", "files", len(r.Files), "work_directory", workDir)
 	defer func() {
+		// File failures are reported only after all eligible files have run.
+		var fileErrors []error
+		for _, file := range result.Files {
+			if file.Error != nil {
+				fileErrors = append(fileErrors, fmt.Errorf("%s [stage=%s]: %w", file.Input, file.Stage, file.Error))
+			}
+		}
+		runErr = errors.Join(append([]error{runErr}, fileErrors...)...)
 		if workDirCreated {
 			workDirPreserved = r.Config.Processing.KeepFiles || runErr != nil || batchHasErrors(result)
 			if !workDirPreserved {
@@ -195,7 +205,15 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 
 	jobs := make([]virtualdub.Job, 0, len(prepared))
 	virtualDubFiles := make([]*plannedFile, 0, len(prepared))
+	builder := virtualdub.JobsBuilder{Pather: pather}
 	for _, file := range prepared {
+		if file.result.Error != nil {
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			file.result.Status, file.result.Stage, file.result.Error = StatusCancelled, stageDeshake, err
+			continue
+		}
 		if file.deshaker == nil {
 			file.readyForFFmpeg = file.ffmpegScale != nil
 			continue
@@ -206,14 +224,28 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 		} else {
 			file.virtualDubOutput = file.finalOutput
 		}
-		jobs = append(jobs, virtualdub.Job{FileIndex: file.fileIndex, InputPath: file.current.Path, OutputPath: file.virtualDubOutput, LogPath: logPath, Deshaker: file.deshakerTemplate, Codec: file.codec})
+		job := virtualdub.Job{FileIndex: file.fileIndex, InputPath: file.current.Path, OutputPath: file.virtualDubOutput, LogPath: logPath, Deshaker: file.deshakerTemplate, Codec: file.codec}
+		if err := builder.Validate(job); err != nil {
+			failFile(baseLogger, runID, file.result, atStage(stagePreparation, err))
+			continue
+		}
+		previous, err := os.Stat(file.virtualDubOutput)
+		if err != nil && !os.IsNotExist(err) {
+			failFile(baseLogger, runID, file.result, atStage(stagePreparation, fmt.Errorf("inspect output %q: %w", file.virtualDubOutput, err)))
+			continue
+		}
+		if previous != nil && !previous.Mode().IsRegular() {
+			failFile(baseLogger, runID, file.result, atStage(stagePreparation, fmt.Errorf("output is not a regular file: %s", file.virtualDubOutput)))
+			continue
+		}
+		file.previousOutput = previous
+		jobs = append(jobs, job)
 		virtualDubFiles = append(virtualDubFiles, file)
 	}
 
 	if len(jobs) > 0 {
 		jobsFile := filepath.Join(workDir, "medialang.jobs")
 		result.JobsFile = jobsFile
-		builder := virtualdub.JobsBuilder{Pather: pather}
 		jobCount, err := builder.Write(jobsFile, jobs)
 		if err != nil {
 			stageErr := atStage(stagePreparation, err)
@@ -238,7 +270,7 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 			virtualDubResult, vdubErr := vdubRunner.Run(ctx, jobsFile)
 			duration := time.Since(started)
 			if vdubErr != nil {
-				stageErr := atStage(stageDeshake, vdubErr)
+				runErr = errors.Join(runErr, atStage(stageDeshake, vdubErr))
 				deshakeLogger.Error("VirtualDub failed",
 					"duration", duration,
 					"exit_code", virtualDubResult.ExitCode,
@@ -247,25 +279,28 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 					"error", vdubErr,
 					"process_output", virtualDubResult.Output,
 				)
-				for _, file := range virtualDubFiles {
-					setFailure(file.result, stageErr)
-				}
 			} else {
 				deshakeLogger.Debug("VirtualDub finished", "duration", duration, "exit_code", virtualDubResult.ExitCode)
-				for _, file := range virtualDubFiles {
-					size, err := verifyOutput(file.virtualDubOutput)
-					if err != nil {
-						failFile(baseLogger, runID, file.result, atStage(stageFileWritten, err))
-						continue
-					}
-					file.current = media.Artifact{Path: file.virtualDubOutput, Type: media.ArtifactVideo, Media: file.input.Media}
-					if file.ffmpegScale == nil {
-						file.result.Status, file.result.Stage, file.result.Error = StatusCompleted, stageFileWritten, nil
-						stageLogger(baseLogger, stageFileWritten, runID).Debug("final file written", "file", file.input.Path, "path", file.finalOutput, "size_bytes", size)
-					} else {
-						file.readyForFFmpeg = true
-						deshakeLogger.Debug("VirtualDub output verified", "file", file.input.Path, "path", file.virtualDubOutput, "size_bytes", size)
-					}
+			}
+			// Inspect every output after the external batch has finished, before
+			// starting any FFmpeg work. One bad output must not reject its peers.
+			for _, file := range virtualDubFiles {
+				if err := ctx.Err(); err != nil {
+					file.result.Status, file.result.Stage, file.result.Error = StatusCancelled, stageDeshake, err
+					continue
+				}
+				size, spec, err := r.verifyVirtualDubOutput(ctx, file, deshakeLogger)
+				if err != nil {
+					failFile(baseLogger, runID, file.result, atStage(stageDeshake, errors.Join(err, vdubErr)))
+					continue
+				}
+				file.current = media.Artifact{Path: file.virtualDubOutput, Type: media.ArtifactVideo, Media: spec}
+				if file.ffmpegScale == nil {
+					file.result.Status, file.result.Stage, file.result.Error = StatusCompleted, stageFileWritten, nil
+					stageLogger(baseLogger, stageFileWritten, runID).Debug("final file written", "file", file.input.Path, "path", file.finalOutput, "size_bytes", size)
+				} else {
+					file.readyForFFmpeg = true
+					deshakeLogger.Debug("VirtualDub output verified", "file", file.input.Path, "path", file.virtualDubOutput, "size_bytes", size)
 				}
 			}
 		}
@@ -274,6 +309,9 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 	scaleLogger := stageLogger(baseLogger, stageScale, runID)
 	ffmpegRunner := ffmpegengine.Runner{Executable: r.Config.Tools.FFmpeg.Path, Logger: scaleLogger}
 	for _, file := range prepared {
+		if file.result.Error != nil {
+			continue
+		}
 		if file.ffmpegScale == nil {
 			continue
 		}
@@ -316,9 +354,9 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 		stageLogger(baseLogger, stageFileWritten, runID).Debug("final file written", "file", file.input.Path, "path", file.finalOutput, "size_bytes", size)
 	}
 	if err := ctx.Err(); err != nil {
-		return result, err
+		return result, errors.Join(runErr, err)
 	}
-	return result, nil
+	return result, runErr
 }
 
 func (r *Runner) planFile(ctx context.Context, filename string, result *FileResult, catalog *workflow.Catalog, store virtualdub.ConfigStore, logger *slog.Logger, runID string) (*plannedFile, error) {
@@ -339,6 +377,7 @@ func (r *Runner) planFile(ctx context.Context, filename string, result *FileResu
 	if err != nil {
 		return nil, atStage(stageProbe, err)
 	}
+	spec = spec.WithScanFallback()
 	probeLogger.Debug("media attributes read",
 		"file", abs,
 		"duration", time.Since(started),
@@ -515,10 +554,37 @@ func verifyOutput(filename string) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("output was not created %q: %w", filename, err)
 	}
+	if !info.Mode().IsRegular() {
+		return 0, fmt.Errorf("output is not a regular file: %s", filename)
+	}
 	if info.Size() == 0 {
 		return 0, fmt.Errorf("output is empty: %s", filename)
 	}
 	return info.Size(), nil
+}
+
+func (r *Runner) verifyVirtualDubOutput(ctx context.Context, file *plannedFile, logger *slog.Logger) (int64, media.MediaSpec, error) {
+	size, err := verifyOutput(file.virtualDubOutput)
+	if err != nil {
+		return 0, media.MediaSpec{}, err
+	}
+	if file.previousOutput != nil {
+		info, err := os.Stat(file.virtualDubOutput)
+		if err != nil {
+			return 0, media.MediaSpec{}, err
+		}
+		if os.SameFile(file.previousOutput, info) && info.Size() == file.previousOutput.Size() && info.ModTime().Equal(file.previousOutput.ModTime()) {
+			return 0, media.MediaSpec{}, fmt.Errorf("VirtualDub did not update output %q", file.virtualDubOutput)
+		}
+	}
+	spec, err := r.Probe.Probe(ctx, file.virtualDubOutput, logger)
+	if err != nil {
+		return 0, media.MediaSpec{}, fmt.Errorf("verify VirtualDub output %q: %w", file.virtualDubOutput, err)
+	}
+	if spec.Width <= 0 || spec.Height <= 0 {
+		return 0, media.MediaSpec{}, fmt.Errorf("VirtualDub output has invalid video dimensions: %s", file.virtualDubOutput)
+	}
+	return size, spec.WithScanFallback(), nil
 }
 
 func skipFile(logger *slog.Logger, runID string, result *FileResult, err error) {

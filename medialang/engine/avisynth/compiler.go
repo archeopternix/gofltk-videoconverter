@@ -21,6 +21,7 @@ type Compiler struct {
 }
 
 func (c Compiler) Compile(input media.Artifact, profile *filter.AviSynthProfile, outputPath string) (media.Artifact, error) {
+	input.Media = input.Media.WithScanFallback()
 	filename := "avisynth/profiles/" + filepath.Base(profile.Config.Profile) + ".avs.tpl"
 	tpl, err := template.New("Avisynth").Option("missingkey=error").ParseFS(embedded.Files, filename)
 	if err != nil {

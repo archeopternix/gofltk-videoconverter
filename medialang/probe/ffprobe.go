@@ -144,7 +144,7 @@ func scanType(value string) (media.ScanType, media.FieldOrder) {
 	case "bb", "bt":
 		return media.ScanInterlaced, media.FieldOrderBFF
 	default:
-		return media.ScanUnknown, media.FieldOrderUnknown
+		return media.ScanProgressive, media.FieldOrderUnknown
 	}
 }
 

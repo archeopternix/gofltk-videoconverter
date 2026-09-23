@@ -12,6 +12,7 @@
 VirtualDub.Open("{{.InFile}}","",0);
 {{.AudioScript}}
 {{.VideoScript}}
+{{.ContainerScript}}
 VirtualDub.video.filters.BeginUpdate();
 VirtualDub.video.filters.Clear();
 VirtualDub.video.filters.Add("Deshaker v3.1");

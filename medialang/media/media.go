@@ -31,6 +31,16 @@ type MediaSpec struct {
 	AudioCodec  string
 }
 
+// WithScanFallback assumes progressive video unless both interlacing and its
+// field order are known. Progressive video does not need a field order.
+func (s MediaSpec) WithScanFallback() MediaSpec {
+	if s.ScanType != ScanInterlaced || (s.FieldOrder != FieldOrderTFF && s.FieldOrder != FieldOrderBFF) {
+		s.ScanType = ScanProgressive
+		s.FieldOrder = FieldOrderUnknown
+	}
+	return s
+}
+
 type ArtifactType string
 
 const (

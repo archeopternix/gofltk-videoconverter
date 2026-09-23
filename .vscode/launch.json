@@ -7,7 +7,12 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/cmd/medialang",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "-config",
+        "${workspaceFolder}/config/app.windows.yaml",
+        "C:/Users/Andreas Eisner/Videos/2026 Yasmin Geburtstag/20260228_200541.mp4"
+      ]
     }
   ]
 }
