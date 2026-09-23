@@ -5,8 +5,8 @@ priority: 80
 
 match:
   interlaced: false
-  width: 848
-  height: 480
+  width: 850
+  height: 478
 
 workflow:
   - id: stabilize
@@ -18,7 +18,7 @@ workflow:
     config:
       width: 1920
       height: 1080
-      filter: spline36
+      filter: spline36:matrixin=gbr:transferin=709:primariesin=709:matrix=709:transfer=709:primaries=709
       pixel_format: yuv422p10le
       video_codec: prores_ks
       audio_codec: pcm_s24le

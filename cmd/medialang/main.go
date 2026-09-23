@@ -82,9 +82,6 @@ func main() {
 				fmt.Printf("%-10s %s -> %s [stage=%s]\n", file.Status, file.Input, file.Output, file.Stage)
 			}
 		}
-		if result.JobsFile != "" {
-			fmt.Printf("jobs: %s\n", result.JobsFile)
-		}
 	}
 	if runErr != nil {
 		slog.Error("run failed", "stage", "finished", "run_id", runID, "error", runErr)

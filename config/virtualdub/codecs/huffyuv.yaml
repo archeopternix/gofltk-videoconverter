@@ -2,13 +2,30 @@ id: huffyuv
 extension: .avi
 
 container_script: |
-  # TODO: Hier die VirtualDub2-Konfiguration für den AVI-Container einfügen.
+  VirtualDub.SaveFormatAVI();
+  VirtualDub.SaveAudioFormat("");
 
 video_script: |
-  # TODO: Hier den exportierten HuffYUV-Konfigurationsblock einfügen.
+  VirtualDub.video.SetInputFormat(0);
+  VirtualDub.video.SetOutputFormat(7);
+  VirtualDub.video.SetMode(3);
+  VirtualDub.video.SetSmartRendering(0);
+  VirtualDub.video.SetPreserveEmptyFrames(0);
+  VirtualDub.video.SetFrameRate2(0,0,1);
+  VirtualDub.video.SetIVTC(0, 0, 0, 0);
+  VirtualDub.video.SetCompression(0x48564646,0,10000,0,"avlib-1.vdplugin");
+  VirtualDub.video.SetCompData(16,"AAAAAAEAAAAIAAAAAAAAAA==");
 
 audio_script: |
-  # TODO: Hier die gewünschte Audiokonfiguration einfügen.
+  VirtualDub.audio.SetSource(1);
+  VirtualDub.audio.SetMode(1);
+  VirtualDub.audio.SetInterleave(1,500,1,0,0);
+  VirtualDub.audio.SetClipMode(1,1);
+  VirtualDub.audio.SetEditMode(1);
+  VirtualDub.audio.SetConversion(0,0,0,0,0);
+  VirtualDub.audio.SetVolume();
+  VirtualDub.audio.SetCompression();
+  VirtualDub.audio.EnableFilterGraph(0);
 
 save_script: |
   VirtualDub.SaveAVI("{{.OutFile}}");

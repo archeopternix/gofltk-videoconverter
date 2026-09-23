@@ -4,11 +4,8 @@ name: DV 576i25
 priority: 100
 
 match:
-  interlaced: true
   width: 720
   height: 576
-  fps: 25
-  fps_tolerance: 0.1
   codec: [dvvideo]
 
 workflow:
@@ -29,7 +26,7 @@ workflow:
     config:
       width: 1440
       height: 1080
-      filter: spline36
+      filter: spline36:matrixin=gbr:transferin=709:primariesin=709:matrix=709:transfer=709:primaries=709
       pixel_format: yuv422p10le
       pad_width: 1920
       pad_height: 1080

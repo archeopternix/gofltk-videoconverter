@@ -2,6 +2,9 @@ tools:
   ffprobe:
     path: C:/Program Files/ffmpeg/bin/ffprobe.exe
 
+  avisynth:
+    path: C:/Program Files/AviSynth
+
   ffmpeg:
     path: C:/Program Files/ffmpeg/bin/ffmpeg.exe
 
@@ -13,7 +16,7 @@ tools:
 
 paths:
   workflows: workflows
-  avisynth: C:/Program Files/AviSynth+/plugins64+
+  avisynth: C:/Program Files/AviSynth/plugins64+
 
 processing:
   output_dir: ../output

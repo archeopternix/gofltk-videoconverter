@@ -155,6 +155,8 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 		return result, fmt.Errorf("create output directory %q: %w", r.Config.Processing.OutputDir, err)
 	}
 
+	fmt.Println("Preparation started. There are: ", len(r.Files), " files in the queue. Please wait...")
+
 	planned := make([]*plannedFile, 0, len(r.Files))
 	outputs := make(map[string]struct{})
 	for i, filename := range r.Files {
@@ -244,6 +246,8 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 	}
 
 	if len(jobs) > 0 {
+		fmt.Println("VirtualDub jobs started. There are: ", len(jobs), " jobs in the queue. Please wait...")
+
 		jobsFile := filepath.Join(workDir, "medialang.jobs")
 		result.JobsFile = jobsFile
 		jobCount, err := builder.Write(jobsFile, jobs)
@@ -304,6 +308,26 @@ func (r *Runner) Run(ctx context.Context) (result *BatchResult, runErr error) {
 				}
 			}
 		}
+	} else {
+		fmt.Println("VirtualDub, there are no jobs in the queue")
+	}
+
+	// is there a file that needs to be scaled with ffmpeg?
+	count := 0
+	for _, file := range prepared {
+		if file.result.Error != nil {
+			continue
+		}
+		if file.ffmpegScale == nil {
+			continue
+		}
+		if !file.readyForFFmpeg {
+			continue
+		}
+		count++
+	}
+	if count > 0 {
+		fmt.Println("FFmpeg scaling started. There are: ", count, " files in the queue. Please wait...")
 	}
 
 	scaleLogger := stageLogger(baseLogger, stageScale, runID)

@@ -11,7 +11,10 @@
       "args": [
         "-config",
         "${workspaceFolder}/config/app.windows.yaml",
-        "C:/Users/Andreas Eisner/Videos/2026 Yasmin Geburtstag/20260228_200541.mp4"
+  //      "C:/Users/Andreas Eisner/Videos/test/30P.avi",
+  //      "C:/Users/Andreas Eisner/Videos/test/1080P.mp4",
+        "C:/Users/Andreas Eisner/Videos/test/DV.avi",
+  //      "C:/Users/Andreas Eisner/Videos/test/HDV.mpeg",
       ]
     }
   ]
