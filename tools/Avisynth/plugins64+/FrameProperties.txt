@@ -1,0 +1,98 @@
+Following are the supported frame properties:
+
+_AbsoluteTime [float]
+The frame’s absolute timestamp in seconds.
+
+_ChromaLocation [int]
+Chroma sample position in YUV formats:
+0=left, 1=center, 2=topleft, 3=top, 4=bottomleft, 5=bottom.
+
+_DurationNum [int]
+Numerator of the frame’s duration. Filters that
+modify the framerate should also change these values.
+
+_DurationDen [int]
+Denominator of the frame’s duration. Filters that
+modify the framerate should also change these values.
+
+_EncodedFrameTop [int]
+Frame number (before pulldown) used to generate this frame's
+top field.
+
+_EncodedFrameBottom [int]
+Frame number (before pulldown) used to generate this frame's
+bottom field.
+
+_FieldBased [int]
+Describes the composition of the frame:
+0=frame based (progressive), 1=bottom field first, 2=top field first.
+Note that the GOP progressive flag is used to determine whether the
+frame is progressive.
+
+_FieldOperation [int]
+Describes the field operation option in effect:
+0=honor pulldown, 1=force film, 2=ignore pulldown.
+
+_FieldOrder [int]
+Display field order of the frame:
+0=bottom field first, 1=top field first.
+
+_Film [int]
+Set if the frame is part of a 3:2 soft pulldown section.
+Note that this uses the RFF history of several preceding
+frames, and so is valid only when doing linear access.
+
+_GOPClosed [int]
+Set if the current GOP is closed.
+
+_GOPNumber [int]
+The 0-based GOP number that contains the frame. Note that
+if this is set as the value x, then propShow displays it as
+[x, y] where y is the 0-based frame number of the first frame
+in the GOP.
+
+_GOPPosition [int]
+The GOP position field from the D2V file for the GOP containing
+the frame.
+
+_Matrix [int]
+The matrix number field from the D2V file for the GOP containing
+the frame.
+
+_PictType [data]
+A single character describing the frame type. It uses the common
+IPB characters but others may also be used for formats with
+additional frame types.
+
+_ProgressiveFrame [int]
+Set if the progress_frame flag is set for this frame.
+
+_QuantsAverage [int]
+The average quantizer value for the frame.
+
+_QuantsMax [int]
+The maximum quantizer value for the frame.
+
+_QuantsMin [int]
+The minimum quantizer value for the frame.
+
+_RFF [int]
+If _FieldOperation is 2 (ignore pulldown) then _RFF describes whether
+the stream specifies that a repeat field operation is to be performed
+on this frame. If _FieldOperation is 0 (honor pulldown) or 1 (force film)
+then _RFF describes whether the frame was composed with field repetition.
+
+_SARDen [int]
+The denominator of the "pixel size" (PAR), also called the
+Sample Aspect Ratio (SAR).
+
+_SARNum [int]
+The numerator of the "pixel size" (PAR), also called the
+Sample Aspect Ratio (SAR).
+
+_TFF [int]
+If _FieldOperation is 2 (ignore pulldown) and _RFF is set, then _TFF
+describes whether the stream specifies that the top field is to be repeated,
+otherwise the bottom field is to be repeated. If _FieldOperation is
+0 (honor pulldown) or 1 (force film) then _TFF is inapplicable and is set
+to -1.

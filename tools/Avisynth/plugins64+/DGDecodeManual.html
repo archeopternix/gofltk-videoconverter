@@ -1,0 +1,434 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- DGDecode User Manual 2.0.5 -->
+<!-- Created by Cyberia (04/28/05) -->
+<html>
+<head>
+	<title>DGDecode - User Manual</title>
+	<meta HTTP-EQUIV="Content-Type" LANG="en-us" CONTENT="text/html; charset=iso-8859-1">
+
+	<style type="text/css">
+		body	      { font-family: verdana, arial, helvetica, sans-serif;
+				font-size: 12px;
+				color: #000000;
+				background-color: #B6C0CA;
+				text-align: left;
+				line-height: 150%;
+				width: 98.5%;
+				padding: 0px;
+				margin: 8px 0px 8px 8px; }
+
+		ul	      { padding: 0px;
+				margin: 0px 62px 0px 60px; }
+
+		ol	      { padding: 0px;
+				margin: 0px 62px 0px 60px; }
+
+		table	      { width: 99%; }
+
+		h1	      { font-size: 26px;
+				background-color: #90A0C0;
+				text-align: center;
+				line-height: 150%;
+				margin: 12px 0px 12px 0px; }
+
+		h2	      { font-size: 22px;
+				background-color: #90A0C0;
+				line-height: 150%;
+				padding-left: 8px;
+				margin: 12px 0px 12px 0px;
+				border-style: solid;
+				border-color: #003366;
+				border-width: 2px; }
+
+		h3	      { font-size: 18px;
+				line-height: 150%;
+				padding-left: 8px;
+				margin: 12px 0px 12px 50px;
+				border-style: solid;
+				border-color: #003366;
+				border-width: 1px; }
+
+		pre	      { font-family: "Courier New", Courier, monospace;
+				font-size: 15px;
+				background-color: #D0D0C0;
+				padding: 12px;
+				margin: 10px 0px 10px 0px;
+				border-style: solid;
+				border-color: #908030;
+				border-width: 1px; }
+
+		code	      { font-family: "Courier New", Courier, monospace;
+				font-size: 15px;
+				color: #002266;
+				letter-spacing: 1px; }
+
+		a	      { font-size: 12px;
+				color: #404A58;
+				text-decoration: none; }
+
+		a:visited     { color: #0000ff; }
+
+		a:hover	      { background-color: #EEE; }
+
+		#right	      { text-align: right; }
+
+		#justify      { text-align: justify; }
+
+		#quote	      { font-style: italic;
+				margin: 0px 50px 0px 50px; }
+
+		#precode      { color: #002266;
+				background-color: #B6C0CA;
+				padding: 0px 0px 0px 12px;
+				margin: 0px;
+				border-style: none; }
+
+		#section      { color: #002266;
+				width: 300px;
+				line-height: 75%;
+				text-align: right; }
+	</style>
+</head>
+
+<body>
+<a name="Top"></a>
+
+<br>
+<h1><hr>DGDecode 3.0.0.0<hr></h1>
+
+<ul>
+	<br>
+	<br>
+	<a href="#WhatIsDGDecode">What is DGDecode?</a><br>
+	<br>
+
+	<a href="#Syntax">Filter Syntax</a><br>
+	&nbsp&nbsp&nbsp<a href="#MPEG2Source">MPEG2Source()</a><br>
+	<br>
+
+	<a href="#Examples">Usage Examples</a><br>
+	&nbsp&nbsp&nbsp<a href="#LoadPlugin_Example">LoadPlugin() Example</a><br>
+	&nbsp&nbsp&nbsp<a href="#MPEG2Source_Examples">MPEG2Source() Examples</a><br>
+	<br>
+
+	<a href="#AppendixA">Appendix A: iDCT Algorithm Notes</a><br>
+	<a href="#AppendixB">Appendix B: SIMD Instructions</a><br>
+	<br>
+
+	<a href="#Credits">Credits</a><br>
+	<a href="#License">License</a><br>
+	<br>
+</ul>
+
+<a name="WhatIsDGDecode"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">What is DGDecode?
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+<ul id="justify">
+	<p>DGDecode, part of the DGMPGDec package, is an MPEG-1/2 decoder plug-in designed for AviSynth+ and Vapoursynth.
+	Both frame servers are supported using a single DLL. It's able to decode any MPEG-1 or MPEG-2 stream readable by DGIndex.</p>
+	<p>DGDecode is based on MPEG2Dec3 v1.10, which itself is based on MPEG2Dec2 from the SourceForge project "save-oe".</p>
+	<p><u>Important Note:</u> This filter was renamed to DGDecode to avoid naming confusions and to clearly link it with
+	DG's version of DVD2AVI called DGIndex. DG wants to take great pains to acknowledge the origins of DGDecode as
+	described by MarcFD in the text below! Yes, DG has continued the evolution and made some fixes, but he stands on the
+	shoulders of the giants documented below in the Credits section.</p>
+	<p>You can get the latest binaries and source code of DGMPGDec at <a href="http://rationalqm.us/dgmpgdec/dgmpgdec.html"
+	target="blank">http://rationalqm.us/dgmpgdec/dgmpgdec.html</a></p>
+	<p>This is free software distributed under the terms of the GNU GPL v2 license.  You must agree to the terms of the license
+	before using the plug-in or its source code. Please see the <a href="#License">License</a> section for details.</p>
+</ul>
+
+<a name="Syntax"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">Filter Syntax
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+	<a name="MPEG2Source"></a><br>
+	<h3>
+		<table><tr>
+			<td width="75%">MPEG2Source()
+			<td id="right"><a href="#Top">Table of Contents</a></td>
+		</table>
+	</h3>
+
+	<ul><ul>
+		<code>
+		MPEG2Source(str "d2v", int "fieldop", int "idct", bool "showQ" int "info", str "indexing_path")
+		</code>
+		<br><br>
+
+		Although DGDecode can now decode both MPEG-1 and MPEG-2, this function is still called MPEG2Source()<br>
+		for compatibility with existing scripts. You can use it for both MPEG-1 and MPEG-2 streams.
+                <br><br>
+		<b>d2v</b>: "[PATH\]project.d2v"<br>
+		<ul>
+			<i>DGIndex Project File.<br>
+			Required parameter!<br>
+			<u>Note 1:</u> PATH can be omitted if "project.d2v" is in the same directory as your
+			<a href="http://www.avisynth.org/" target="blank">AviSynth</a> (*.avs) script.</i><br><br>
+			
+			Instead of a path to a DGI (index) file, you may give a path to a supported media file. Then, if a
+			D2V file does not already exist, the source file will be automatically indexed and the resulting D2V file opened
+			transparently. For this mechanism to work, the invoked DGDecode.dll must be in the same folder as DGIndex.exe. This
+			is usually the case for a basic installation of DGMPGDec. However, if you have moved DGDecode to (say)
+			the Avisynth+ plugins folder, you should also place a copy of DGIndex.exe in the same folder.<br><br>
+			When the DGI file is automatically created, the DGIndex INI file controls whether demuxing occurs.
+			Note that indexing and demuxing occur only when the D2V file does not exist.
+		</ul>
+		<br>
+
+		<b>fieldop</b>: 0 to 2  (default: not applicable)<br>
+		<ul>
+			<i>Field Operation.</i><br>
+			If this parameter is present, it overrides the Field_Operation
+			specified in the D2V file.<br>
+			- 0: Honor pulldown<br>
+			- 1: Force film<br>
+			- 2: Ignore pulldown<br>
+		</ul>
+		<br>
+
+		<b>idct</b>: 0 to 7  (default: 0)<br>
+		<ul>
+			<i>iDCT Algorithm.<br>
+			For more infomation on iDCTs please see <a href="#AppendixB">Appendix B</a>.<br>
+			Please see <a href="#AppendixC">Appendix C</a> for supported CPUs.</i><br>
+			- 0: Use value specified by DGIndex<br>
+			- 1: 32-bit MMX<br>
+			- 2: 32-bit SSEMMX<br>
+			- 3: 32-bit SSE2MMX<br>
+			- 4: 64-bit Floating Point<br>
+			- 5: 64-bit IEEE-1180 Reference<br>
+			- 6: 32-bit SSEMMX (Skal)<br>
+			- 7: 32-bit Simple MMX (XviD)<br>
+		</ul>
+		<br>
+
+		<b>info</b>: 0 to 3  (default: 0)<br>
+		<ul>
+			<i>Debug Information.</i><br>
+			- 0: Do not generate debug information<br>
+			- 1: Overlay debug information on the video<br>
+			- 2: Output debug information via OutputDebugString()<br>
+			- 3: Output hints in the video (as defined in utilities.cpp/utilities.h)<br>
+		</ul>
+		<br>
+
+		<b>showQ</b>: true/false  (default: false)<br>
+		<ul>
+			<i>Show Macroblock Quantizers.</i><br>
+			- true:  Show quantizers<br>
+			- false: Do not show quantizers<br>
+		</ul>
+		<br>
+
+		<b>indexing_path</b>: string (default: "")<br>
+		<ul>
+			<i>Indexing path.<br>
+			When a media file is opened directly, this option specifies the folder to be used for the index/demux files.
+			If this option is missing or is given as "" then the folder containing the source file will be used.
+			The path string should not include a trailing '\' character (to avoid problems with Python syntax
+			under Vapoursynth).</i><br>
+		</ul>
+		<br>
+	</ul></ul>
+
+	</ul></ul>
+
+<a name="Examples"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">Usage Examples
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+	<a name="LoadPlugin_Example"></a><br>
+	<h3>
+		<table><tr>
+			<td width="75%">AviSynth LoadPlugin() Example
+			<td id="right"><a href="#Top">Table of Contents</a></td>
+		</table>
+	</h3>
+
+	<ul><ul>
+		AviSynth+'s LoadPlugin() must be
+		called before any DGDecode functions can be used.<br>
+		To accomplish this, add the following line to the beginning of your AviSynth+ (*.avs) script:<br>
+		<pre>LoadPlugin("[PATH\]DGDecode.dll")</pre>
+		<u>Note:</u> PATH can be ignored if DGDecode.dll is in the default AviSynth+</a>
+		plug-in directory, otherwise PATH must be specified.<br>
+		<br>
+		<br>
+	</ul></ul>
+
+	<a name="MPEG2Source_Examples"></a><br>
+	<h3>
+		<table><tr>
+			<td width="75%">MPEG2Source() Examples
+			<td id="right"><a href="#Top">Table of Contents</a></td>
+		</table>
+	</h3>
+
+	<ul><ul>
+		<a href="#MPEG2Source">MPEG2Source()</a> should be used only with MPEG-1 and MPEG-2 video sources.<br>
+		<br>
+
+		To do plain YV12 decoding:<br>
+		<pre>MPEG2Source("[PATH\]project.d2v")</pre>
+		<u>Note:</u> PATH can be ignored if "project.d2v" is in the same directory as your
+		AviSynth (*.avs) script.<br>
+		<br>
+
+		To select the optimized 32-bit SSE2 iDCT:<br>
+		<pre>MPEG2Source("project.d2v", idct=5)</pre>
+		<br>
+
+		To do display onscreen information about the video:<br>
+		<pre>MPEG2Source("project.d2v", info=1)</pre>
+		<br>
+		<br>
+	</ul></ul>
+
+<a name="AppendixA"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">APPENDIX A: iDCT Algorithm Notes
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+<ul id="justify">
+	<p>The FlasKMPEG readme file contains an excellent technical description of iDCTs. It states:</p>
+
+	<ul id="quote">
+		<p>"The video information inside MPEG files is stored in the frequency domain rather than in the spatial
+		domain (the images we see). That way, the information gets compacted and that compaction can be used to
+		compress (reduce) the amount of information you have to send over the transmission channel. MPEG uses the
+		DCT (Discrete Cosine Transform) to translate spatial information into frequency information. To bring back
+		the spatial information from the MPEG stream you have to apply the iDCT, that is, the Inverse Discrete
+		Cosine Transform, that undoes the DCT that was used during encoding."</p>
+
+		<p>"Although MPEG is almost deterministic (given a MPEG stream the output should be identical in all
+		decoders), the standard has a degree of freedom when choosing the iDCT to use. That way, the decoder
+		can be more easily implemented depending on the hardware below it. What the standard requires from the
+		decoder is that the iDCT meets IEEE-1180 specs, or in plain words, that the error from the iDCT doesn't
+		go beyond that the ones pointed out in the IEEE-1180."</p>
+	</ul>
+
+	<p>Which iDCT you should use depends primarily on what CPU you have and to a lesser degree, on how accurate an iDCT
+	you desire. Most people will not be able to tell the difference in quality between these algorithms but they can be easily
+	observed by combining the AviSynth filters <i><a href="http://www.avisynth.org/Subtract" target="blank">Subtract()</a></i>
+	and <i><a href="http://www.avisynth.org/Levels" target="blank">Levels()</a></i>. All of the available options are IEEE-1180
+	compliant, except for <b>SSE/MMX (Skal)</b>.</p>
+
+	<p>Qualitywise: <b>IEEE-1180 Reference</b> > <b>64-bit Floating Point</b> > <b>Simple MMX (XviD)</b> > Remaining iDCTs.</p>
+
+	<p>Speedwise: <b>SSE2/MMX</b> and <b>SSE/MMX (Skal)</b> are usually the fastest. The <b>IEEE-1180 Reference</b> is easily
+	the slowest.</p>
+</ul>
+
+<a name="AppendixB"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">APPENDIX B: SIMD Instructions
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+<ul id="justify">
+	<p>SIMD is an acronym for <i>Single Instruction, Multiple Data</i>. It is a term that refers to a set of operations for
+	efficiently handling large quantities of data in parallel. This is especially productive for applications in which video
+	or audio files are processed. What usually required a repeated succession of instructions can now be performed in one
+	instruction.</p>
+
+	<p>There are seven different sets of SIMD instructions available to Intel and AMD processors, but not every CPU supports
+	all of these advanced instruction sets. This is why many of DGDecode's functions provide options for specifying which
+	set of optimizations to use.  The table below lists the SIMD instructions supported by DGDecode, and the processors
+	required utilize them.</p>
+</ul>
+<br>
+<ul>
+	<ul>
+		<table border="1px" cellspacing="2px" cellpadding="10%">
+		<caption><i>Table 1: SIMD Instructions supported by DGDecode</i></caption>
+			<tr>
+				<th>
+				<th>MMX
+				<th>3DNow!
+				<th>SSE
+				<th>SSE2
+			<tr>
+				<th>Required Intel CPUs
+				<td>All Intel CPUs
+				<td>Unsupported by Intel CPUs
+				<td>Pentium 3, Pentium 4
+				<td>Pentium 4
+			<tr>
+				<th>Required AMD CPUs
+				<td>All AMD CPUs
+				<td>All AMD CPUs
+				<td>Athlon XP, Athlon 64
+				<td>Athlon 64
+		</table>
+	</ul>
+</ul>
+<br>
+
+<a name="Credits"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">Credits
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+<ul>
+	<br>
+	Alphabetical Order:<br><br>
+	"ARDA", for the LumaYV12() filter<br>
+	Mathias Born, author of original MPEG2Dec<br>
+	"Cyberia", for Appendices B and C, and users manual modernization<br>
+	"Didée", for Appendix A: Notes on BlindPP() Usage<br>
+	"fccHandler", MPEG decoding fixes/improvements, good advice<br>
+	Donald Graft ("DG"), frame loss fix, accurate indexing, PVA support, and more<br>
+	Peter Gubanov, author of the MMX/SSEMMX iDCT<br>
+	Chia-chen Kuo ("jackei"), author of DVD2AVI<br>
+	"Manao", for his Deblock() filter<br>
+	"MarcFD", YV12 support and more<br>
+	"Nic", post-processing and more<br>
+	Miha Peternel, author of the Floating Point and Reference iDCT<br>
+	Dmitry Rozhdestvensky, author of the SSE2 iDCT<br>
+	"sh0dan", code optimizations<br>
+	"Skal", for his SSEMMX iDCT<br>
+	"trbarry", transport parsing, and code optimizations<br>
+	"tritical", upsampling, info overlay, VFAPI enhancements, and lots of bug fixes<br>
+</ul>
+<br>
+
+<a name="License"></a><br>
+<h2>
+	<table><tr>
+		<td width="75%">License
+		<td id="right"><a href="#Top">Table of Contents</a></td>
+	</table>
+</h2>
+
+<ul><br>
+This program is distributed under the terms of the GNU Public License. For details
+please refer to the file COPYING.TXT included in the distribution package.
+</ul>
+<br>
+
+<hr>
+<br>
+Copyright (C) 2004-2024 Donald A. Graft, All Rights Reserved.<br>
+</body>
+</html>
